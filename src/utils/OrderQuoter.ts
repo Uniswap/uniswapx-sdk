@@ -200,9 +200,9 @@ export class OrderQuoter {
             this.chainId,
             await reactor.permit2()
           );
-          const maker = order.order.getSigner(order.signature);
+          const swapper = order.order.getSigner(order.signature);
           const cancelled = await nonceManager.isUsed(
-            maker,
+            swapper,
             order.order.info.nonce
           );
           return cancelled

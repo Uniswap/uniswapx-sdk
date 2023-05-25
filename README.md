@@ -91,7 +91,7 @@ Returns an abi-encoded serialization of the order. This serialized format is pas
 
 **getSigner(signature)**
 
-Recovers the address which created the given signature over the order. Used to determine the order maker.
+Recovers the address which created the given signature over the order. Used to determine the order swapper.
 
 
 **permitData()**

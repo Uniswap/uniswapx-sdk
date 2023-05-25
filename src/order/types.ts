@@ -31,8 +31,8 @@ export abstract class Order {
   abstract getSigner(signature: SignatureLike): string;
 
   /**
-   * Returns the data for generating the maker EIP-712 permit signature
-   * @return The data for generating the maker EIP-712 permit signature
+   * Returns the data for generating the swapper EIP-712 permit signature
+   * @return The data for generating the swapper EIP-712 permit signature
    */
   abstract permitData(): PermitTransferFromData;
 
@@ -64,7 +64,7 @@ export type TokenAmount = {
 
 export type OrderInfo = {
   reactor: string;
-  offerer: string;
+  swapper: string;
   nonce: BigNumber;
   deadline: number;
   validationContract: string;

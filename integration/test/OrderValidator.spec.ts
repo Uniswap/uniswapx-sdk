@@ -42,11 +42,11 @@ describe("OrderValidator", () => {
   let tokenIn: MockERC20;
   let tokenOut: MockERC20;
   let admin: Signer;
-  let taker: Signer;
-  let maker: ethers.Wallet;
+  let filler: Signer;
+  let swapper: ethers.Wallet;
 
   beforeEach(async () => {
-    [admin, taker] = await ethers.getSigners();
+    [admin, filler] = await ethers.getSigners();
 
     const exclusivityValidatorFactory = await ethers.getContractFactory(
       ExclusiveFillerValidationAbi.abi,
@@ -81,9 +81,9 @@ describe("OrderValidator", () => {
       permit2.address
     );
 
-    maker = ethers.Wallet.createRandom().connect(ethers.provider);
+    swapper = ethers.Wallet.createRandom().connect(ethers.provider);
     await admin.sendTransaction({
-      to: await maker.getAddress(),
+      to: await swapper.getAddress(),
       value: parseEther('1'),
     });
     validator = new OrderValidator(ethers.provider, chainId, quoter.address);
@@ -95,19 +95,19 @@ describe("OrderValidator", () => {
     tokenIn = (await tokenFactory.deploy("TEST A", "ta", 18)) as MockERC20;
     tokenOut = (await tokenFactory.deploy("TEST B", "tb", 18)) as MockERC20;
 
-    await tokenIn.mint(await maker.getAddress(), parseEther('1'));
+    await tokenIn.mint(await swapper.getAddress(), parseEther('1'));
     await tokenIn
-      .connect(maker)
+      .connect(swapper)
       .approve(permit2.address, ethers.constants.MaxUint256);
 
     await tokenOut.mint(
-      await taker.getAddress(),
+      await filler.getAddress(),
       parseEther('100'),
     );
     await tokenOut
-      .connect(taker)
+      .connect(filler)
       .approve(permit2.address, ethers.constants.MaxUint256);
-    await permit2.connect(taker).approve(tokenOut.address, reactor.address, BigNumber.from(2).pow(160).sub(1), BigNumber.from(2).pow(48).sub(1));
+    await permit2.connect(filler).approve(tokenOut.address, reactor.address, BigNumber.from(2).pow(160).sub(1), BigNumber.from(2).pow(48).sub(1));
   });
 
   it("quotes a valid order", async () => {
@@ -116,7 +116,7 @@ describe("OrderValidator", () => {
       .deadline(deadline)
       .endTime(deadline)
       .startTime(deadline - 1000)
-      .offerer(await maker.getAddress())
+      .swapper(await swapper.getAddress())
       .nonce(BigNumber.from(98))
       .input({
         token: tokenIn.address,
@@ -132,7 +132,7 @@ describe("OrderValidator", () => {
       .build();
 
     const { domain, types, values } = order.permitData();
-    const signature = await maker._signTypedData(domain, types, values);
+    const signature = await swapper._signTypedData(domain, types, values);
 
     const quoterLib = new OrderQuoterLib(
       ethers.provider,
@@ -155,7 +155,7 @@ describe("OrderValidator", () => {
       .endTime(deadline)
       .startTime(deadline - 1000)
       .nonce(BigNumber.from(100))
-      .offerer(await maker.getAddress())
+      .swapper(await swapper.getAddress())
       .input({
         token: tokenIn.address,
         startAmount: BigNumber.from("1000000"),
@@ -170,7 +170,7 @@ describe("OrderValidator", () => {
       .build();
 
     const { domain, types, values } = order.permitData();
-    const signature = await maker._signTypedData(domain, types, values);
+    const signature = await swapper._signTypedData(domain, types, values);
 
     expect(await validator.validate({ order, signature })).to.equal(
       OrderValidation.OK
@@ -185,7 +185,7 @@ describe("OrderValidator", () => {
       .endTime(deadline)
       .startTime(deadline - 1000)
       .nonce(BigNumber.from(100))
-      .offerer(await maker.getAddress())
+      .swapper(await swapper.getAddress())
       .input({
         token: tokenIn.address,
         startAmount: amount,
@@ -195,15 +195,15 @@ describe("OrderValidator", () => {
         token: tokenOut.address,
         startAmount: amount,
         endAmount: BigNumber.from(10).pow(17).mul(9),
-        recipient: await maker.getAddress(),
+        recipient: await swapper.getAddress(),
       })
       .build();
 
     const { domain, types, values } = order.permitData();
-    const signature = await maker._signTypedData(domain, types, values);
+    const signature = await swapper._signTypedData(domain, types, values);
 
     const res = await reactor
-      .connect(taker)
+      .connect(filler)
       .execute(
         { order: order.serialize(), sig: signature },
         DIRECT_TAKER_FILL,
@@ -223,7 +223,7 @@ describe("OrderValidator", () => {
       .endTime(startTime + 1000)
       .startTime(startTime)
       .nonce(BigNumber.from(100))
-      .offerer(await maker.getAddress())
+      .swapper(await swapper.getAddress())
       .input({
         token: tokenIn.address,
         startAmount: parseEther('1'),
@@ -242,7 +242,7 @@ describe("OrderValidator", () => {
       .build();
 
     const { domain, types, values } = order.permitData();
-    const signature = await maker._signTypedData(domain, types, values);
+    const signature = await swapper._signTypedData(domain, types, values);
 
     expect(await validator.validate({ order, signature })).to.equal(
       OrderValidation.ExclusivityPeriod
@@ -256,7 +256,7 @@ describe("OrderValidator", () => {
       .endTime(startTime + 1000)
       .startTime(startTime)
       .nonce(BigNumber.from(100))
-      .offerer(await maker.getAddress())
+      .swapper(await swapper.getAddress())
       .input({
         token: tokenIn.address,
         startAmount: parseEther('1'),
@@ -275,7 +275,7 @@ describe("OrderValidator", () => {
       .build();
 
     const { domain, types, values } = order.permitData();
-    const signature = await maker._signTypedData(domain, types, values);
+    const signature = await swapper._signTypedData(domain, types, values);
 
     expect(await validator.validate({ order, signature })).to.equal(
       OrderValidation.OK
@@ -305,7 +305,7 @@ describe("OrderValidator", () => {
       .endTime(deadline)
       .startTime(deadline - 1000)
       .nonce(BigNumber.from(100))
-      .offerer(await maker.getAddress())
+      .swapper(await swapper.getAddress())
       .input({
         token: tokenIn.address,
         startAmount: parseEther('1'),
@@ -324,7 +324,7 @@ describe("OrderValidator", () => {
       .build();
 
     const { domain, types, values } = order.permitData();
-    const signature = await maker._signTypedData(domain, types, values);
+    const signature = await swapper._signTypedData(domain, types, values);
 
     expect(await validator.validate({ order, signature })).to.equal(
       OrderValidation.ExclusivityPeriod
@@ -338,7 +338,7 @@ describe("OrderValidator", () => {
       .endTime(deadline)
       .startTime(deadline - 1000)
       .nonce(BigNumber.from(100))
-      .offerer(await maker.getAddress())
+      .swapper(await swapper.getAddress())
       .input({
         token: tokenIn.address,
         startAmount: parseEther('2'),
@@ -353,7 +353,7 @@ describe("OrderValidator", () => {
       .build();
 
     const { domain, types, values } = order.permitData();
-    const signature = await maker._signTypedData(domain, types, values);
+    const signature = await swapper._signTypedData(domain, types, values);
 
     expect(await validator.validate({ order, signature })).to.equal(
       OrderValidation.InsufficientFunds
@@ -367,7 +367,7 @@ describe("OrderValidator", () => {
       .endTime(deadline)
       .startTime(deadline - 1000)
       .nonce(BigNumber.from(100))
-      .offerer(await maker.getAddress())
+      .swapper(await swapper.getAddress())
       .input({
         token: tokenIn.address,
         startAmount: BigNumber.from("1000000"),
@@ -382,7 +382,7 @@ describe("OrderValidator", () => {
       .build();
 
     const { domain, types, values } = order.permitData();
-    const signature = await maker._signTypedData(domain, types, values);
+    const signature = await swapper._signTypedData(domain, types, values);
 
     expect(await validator.validate({ order, signature })).to.equal(
       OrderValidation.InvalidOrderFields
@@ -397,7 +397,7 @@ describe("OrderValidator", () => {
       .endTime(deadline)
       .startTime(deadline - 1000)
       .nonce(BigNumber.from(100))
-      .offerer(await maker.getAddress())
+      .swapper(await swapper.getAddress())
       .input({
         token: tokenIn.address,
         startAmount: BigNumber.from("1000000"),
@@ -412,7 +412,7 @@ describe("OrderValidator", () => {
       .build();
 
     const { domain, types, values } = order.permitData();
-    const signature = await maker._signTypedData(domain, types, values);
+    const signature = await swapper._signTypedData(domain, types, values);
 
     expect(await validator.validate({ order, signature })).to.equal(
       OrderValidation.InvalidOrderFields
@@ -427,7 +427,7 @@ describe("OrderValidator", () => {
       .endTime(deadline)
       .startTime(deadline - 1000)
       .nonce(BigNumber.from(100))
-      .offerer(await maker.getAddress())
+      .swapper(await swapper.getAddress())
       .input({
         token: tokenIn.address,
         startAmount: BigNumber.from("1000000"),
@@ -451,7 +451,7 @@ describe("OrderValidator", () => {
     );
 
     const { domain, types, values } = order.permitData();
-    const signature = await maker._signTypedData(domain, types, values);
+    const signature = await swapper._signTypedData(domain, types, values);
 
     expect(await validator.validate({ order, signature })).to.equal(
       OrderValidation.InvalidOrderFields
@@ -464,7 +464,7 @@ describe("OrderValidator", () => {
       .deadline(deadline)
       .endTime(deadline)
       .startTime(deadline)
-      .offerer(await maker.getAddress())
+      .swapper(await swapper.getAddress())
       .nonce(BigNumber.from(100))
       .input({
         token: tokenIn.address,
@@ -489,7 +489,7 @@ describe("OrderValidator", () => {
     );
 
     const { domain, types, values } = order.permitData();
-    const signature = await maker._signTypedData(domain, types, values);
+    const signature = await swapper._signTypedData(domain, types, values);
 
     expect(await validator.validate({ order, signature })).to.equal(
       OrderValidation.Expired
@@ -502,7 +502,7 @@ describe("OrderValidator", () => {
       .deadline(deadline)
       .endTime(deadline)
       .startTime(deadline - 1000)
-      .offerer(await maker.getAddress())
+      .swapper(await swapper.getAddress())
       .nonce(BigNumber.from(100))
       .input({
         token: tokenIn.address,
@@ -520,7 +520,7 @@ describe("OrderValidator", () => {
     const order = new DutchOrder(info, chainId, permit2.address);
 
     const { domain, types, values } = order.permitData();
-    const signature = await maker._signTypedData(domain, types, values);
+    const signature = await swapper._signTypedData(domain, types, values);
 
     expect(await validator.validate({ order, signature })).to.equal(
       OrderValidation.OK
@@ -547,7 +547,7 @@ describe("OrderValidator", () => {
       .deadline(deadline)
       .endTime(deadline)
       .startTime(deadline)
-      .offerer(await maker.getAddress())
+      .swapper(await swapper.getAddress())
       .nonce(BigNumber.from(100))
       .input({
         token: tokenIn.address,
@@ -568,7 +568,7 @@ describe("OrderValidator", () => {
     );
 
     const { domain, types, values } = order.permitData();
-    const signature = await maker._signTypedData(domain, types, values);
+    const signature = await swapper._signTypedData(domain, types, values);
 
     expect(await validator.validate({ order, signature })).to.equal(
       OrderValidation.InvalidOrderFields
@@ -582,7 +582,7 @@ describe("OrderValidator", () => {
       .endTime(deadline)
       .startTime(deadline - 1000)
       .nonce(BigNumber.from(7))
-      .offerer(await maker.getAddress())
+      .swapper(await swapper.getAddress())
       .input({
         token: tokenIn.address,
         startAmount: BigNumber.from("1000000"),
@@ -598,9 +598,9 @@ describe("OrderValidator", () => {
     const order = new DutchOrder(info, chainId, permit2.address);
 
     const { domain, types, values } = order.permitData();
-    const signature = await maker._signTypedData(domain, types, values);
+    const signature = await swapper._signTypedData(domain, types, values);
     const { word, mask } = getCancelSingleParams(BigNumber.from(7));
-    await permit2.connect(maker).invalidateUnorderedNonces(word, mask);
+    await permit2.connect(swapper).invalidateUnorderedNonces(word, mask);
 
     expect(await validator.validate({ order, signature })).to.equal(
       OrderValidation.NonceUsed
