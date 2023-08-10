@@ -1,24 +1,6 @@
-import { ChainId, Currency } from "@uniswap/sdk-core";
+import { Currency } from "@uniswap/sdk-core";
 
-export enum NativeAssets {
-  MATIC = 'MATIC',
-  BNB = 'BNB',
-  AVAX = 'AVAX',
-  ETH = 'ETH',
-}
-
-function nativeCurrencyAddressString(chainId: number): string {
-  switch (chainId) {
-    case ChainId.POLYGON:
-      return NativeAssets.MATIC 
-    case ChainId.BNB:
-      return NativeAssets.BNB 
-    case ChainId.AVALANCHE:
-      return NativeAssets.AVAX
-    default:
-      return NativeAssets.ETH
-  }
-}
+export const NATIVE_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 export function areCurrenciesEqual(
   currency: Currency,
@@ -28,7 +10,7 @@ export function areCurrenciesEqual(
   if (currency.chainId !== chainId) return false;
 
   if (currency.isNative) {
-    return address === nativeCurrencyAddressString(chainId)
+    return address === NATIVE_ADDRESS;
   }
 
   return currency.address.toLowerCase() === address?.toLowerCase();
