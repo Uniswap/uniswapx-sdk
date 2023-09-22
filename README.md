@@ -46,10 +46,11 @@ const serializedOrder = order.serialize();
 
 ### Parsing Orders
 ```ts
-import { parseOrder, Order, OrderValidation } from '@uniswap/uniswapx-sdk';
+import { DutchOrder } from "@uniswap/uniswapx-sdk";
 
+const chainId = 1; 
 const serializedOrder = '0x1111222233334444555500000000234300234...';
-const order: Order = parseOrder(serializedOrder);
+const order:Order = DutchOrder.parse(serializedOrder, chainId);
 
 const orderData = order.info;
 const orderHash = order.hash();
