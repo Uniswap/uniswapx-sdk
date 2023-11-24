@@ -30,7 +30,6 @@
       "pre-commit": "yarn fix"
     }
   },
-  "module": "dist/uniswapx-sdk.esm.js",
   "devDependencies": {
     "@typechain/ethers-v5": "^10.1.0",
     "@types/jest": "^29.0.3",
