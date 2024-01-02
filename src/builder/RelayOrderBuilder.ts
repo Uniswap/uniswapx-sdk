@@ -59,6 +59,7 @@ export class RelayOrderBuilder extends OrderBuilder {
     }
 
     this.info = {
+      actions: [],
       outputs: [],
     };
   }
@@ -81,8 +82,8 @@ export class RelayOrderBuilder extends OrderBuilder {
       `startAmount must be less than or equal than endAmount: ${input.startAmount.toString()}`
     );
     invariant(
-      input.decayStartTime < input.decayEndTime,
-      `decayStartTime must be less than decayEndTime: ${input.decayStartTime}`
+      input.decayStartTime <= input.decayEndTime,
+      `decayStartTime must be less than or equal to decayEndTime: ${input.decayStartTime}`
     );
     this.info.inputs.push(input);
     return this;
@@ -97,8 +98,8 @@ export class RelayOrderBuilder extends OrderBuilder {
       `startAmount must be greater than endAmount: ${output.startAmount.toString()}`
     );
     invariant(
-      output.decayStartTime < output.decayEndTime,
-      `decayStartTime must be less than decayEndTime: ${output.decayStartTime}`
+      output.decayStartTime <= output.decayEndTime,
+      `decayStartTime must be less than or equal to decayEndTime: ${output.decayStartTime}`
     );
     this.info.outputs.push(output);
     return this;
@@ -154,7 +155,6 @@ export class RelayOrderBuilder extends OrderBuilder {
   }
 
   build(): RelayOrder {
-    invariant(this.info.deadline !== undefined, "deadline not set");
     invariant(this.info.actions !== undefined, "actions not set");
     invariant(this.info.inputs !== undefined, "inputs not set");
     invariant(
