@@ -62,6 +62,12 @@ export type TokenAmount = {
   readonly amount: BigNumber;
 };
 
+export type TokenAmountWithRecipient = {
+  readonly token: string;
+  readonly amount: BigNumber;
+  readonly recipient: string;
+};
+
 export type OrderInfo = {
   reactor: string;
   swapper: string;

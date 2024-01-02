@@ -8,7 +8,7 @@ import {
   OrderQuoter as OrderQuoterContract,
 } from "../contracts";
 import { MissingConfiguration } from "../errors";
-import { Order, TokenAmount } from "../order";
+import { Order, TokenAmount, TokenAmountWithRecipient } from "../order";
 import { parseExclusiveFillerData, ValidationType } from "../order/validation";
 
 import { NonceManager } from "./NonceManager";
@@ -29,15 +29,23 @@ export enum OrderValidation {
   OK,
 }
 
-export interface ResolvedOrder {
+export type ResolvedOrder = ResolvedDutchOrder | ResolvedRelayOrder;
+
+export interface ResolvedDutchOrder {
   input: TokenAmount;
   outputs: TokenAmount[];
+}
+
+export interface ResolvedRelayOrder {
+  actions: string[];
+  inputs: TokenAmountWithRecipient[];
+  outputs: TokenAmountWithRecipient[];
 }
 
 export interface OrderQuote {
   validation: OrderValidation;
   // not specified if validation is not OK
-  quote: ResolvedOrder | undefined;
+  quote: ResolvedDutchOrder | undefined;
 }
 
 const BASIC_ERROR = "0x08c379a0";
@@ -116,7 +124,7 @@ export class OrderQuoter {
     });
 
     const validations = await this.getValidations(orders, results);
-    const quotes: (ResolvedOrder | undefined)[] = results.map(
+    const quotes: (ResolvedDutchOrder | undefined)[] = results.map(
       ({ success, returnData }) => {
         if (!success) {
           return undefined;
