@@ -1,3 +1,6 @@
+import { keccak256 } from "@ethersproject/keccak256";
+import { toUtf8Bytes } from "@ethersproject/strings";
+
 import { OrderType, REVERSE_REACTOR_MAPPING } from "../constants";
 import { MissingConfiguration } from "../errors";
 import { stripHexPrefix } from "../utils";
@@ -6,11 +9,16 @@ import { DutchOrder } from "./DutchOrder";
 import { Order } from "./types";
 
 export * from "./DutchOrder";
+export * from "./RelayOrder";
 export * from "./types";
 export * from "./validation";
 
 const FIRST_FIELD_OFFSET = 88;
 const ADDRESS_LENGTH = 40;
+
+export function id(text: string): string {
+  return keccak256(toUtf8Bytes(text));
+}
 
 /**
  * Parses a given serialized order

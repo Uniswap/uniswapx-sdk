@@ -1,9 +1,9 @@
-import { BigNumber, ethers } from "ethers";
+import { BigNumber } from "ethers";
 import invariant from "tiny-invariant";
 
 import { OrderType, REACTOR_ADDRESS_MAPPING } from "../constants";
 import { MissingConfiguration } from "../errors";
-import { DutchInput, DutchOrder, DutchOrderInfo, DutchOutput } from "../order";
+import { RelayOrder, RelayOrderInfo, RelayInput, RelayOutput } from "../order";
 import { ValidationInfo } from "../order/validation";
 
 import { OrderBuilder } from "./OrderBuilder";
@@ -12,25 +12,26 @@ import { OrderBuilder } from "./OrderBuilder";
  * Helper builder for generating relay orders
  */
 export class RelayOrderBuilder extends OrderBuilder {
-  private info: Partial<DutchOrderInfo>;
+  private info: Partial<RelayOrderInfo>;
 
-  static fromOrder(order: DutchOrder): RelayOrderBuilder {
+  static fromOrder(order: RelayOrder): RelayOrderBuilder {
     // note chainId not used if passing in true reactor address
     const builder = new RelayOrderBuilder(order.chainId, order.info.reactor)
       .deadline(order.info.deadline)
-      .decayEndTime(order.info.decayEndTime)
-      .decayStartTime(order.info.decayStartTime)
       .swapper(order.info.swapper)
       .nonce(order.info.nonce)
-      .input(order.info.input)
-      .exclusiveFiller(
-        order.info.exclusiveFiller,
-        order.info.exclusivityOverrideBps
-      )
       .validation({
         additionalValidationContract: order.info.additionalValidationContract,
         additionalValidationData: order.info.additionalValidationData,
       });
+
+    for (const action of order.info.actions) {
+      builder.action(action);
+    }
+
+    for (const input of order.info.inputs) {
+      builder.input(input);
+    }
 
     for (const output of order.info.outputs) {
       builder.output(output);
@@ -59,31 +60,35 @@ export class RelayOrderBuilder extends OrderBuilder {
 
     this.info = {
       outputs: [],
-      exclusiveFiller: ethers.constants.AddressZero,
-      exclusivityOverrideBps: BigNumber.from(0),
     };
   }
 
-  decayStartTime(decayStartTime: number): RelayOrderBuilder {
-    this.info.decayStartTime = decayStartTime;
-    return this;
-  }
-
-  decayEndTime(decayEndTime: number): RelayOrderBuilder {
-    if (this.orderInfo.deadline === undefined) {
-      super.deadline(decayEndTime);
+  // TODO: perform some calldata validation here
+  action(action: string): RelayOrderBuilder {
+    if (!this.info.actions) {
+      this.info.actions = [];
     }
-
-    this.info.decayEndTime = decayEndTime;
+    this.info.actions.push(action);
     return this;
   }
 
-  input(input: DutchInput): RelayOrderBuilder {
-    this.info.input = input;
+  input(input: RelayInput): RelayOrderBuilder {
+    if (!this.info.inputs) {
+      this.info.inputs = [];
+    }
+    invariant(
+      input.startAmount.lte(input.endAmount),
+      `startAmount must be less than or equal than endAmount: ${input.startAmount.toString()}`
+    );
+    invariant(
+      input.decayStartTime < input.decayEndTime,
+      `decayStartTime must be less than decayEndTime: ${input.decayStartTime}`
+    );
+    this.info.inputs.push(input);
     return this;
   }
 
-  output(output: DutchOutput): RelayOrderBuilder {
+  output(output: RelayOutput): RelayOrderBuilder {
     if (!this.info.outputs) {
       this.info.outputs = [];
     }
@@ -91,17 +96,16 @@ export class RelayOrderBuilder extends OrderBuilder {
       output.startAmount.gte(output.endAmount),
       `startAmount must be greater than endAmount: ${output.startAmount.toString()}`
     );
+    invariant(
+      output.decayStartTime < output.decayEndTime,
+      `decayStartTime must be less than decayEndTime: ${output.decayStartTime}`
+    );
     this.info.outputs.push(output);
     return this;
   }
 
   deadline(deadline: number): RelayOrderBuilder {
     super.deadline(deadline);
-
-    if (this.info.decayEndTime === undefined) {
-      this.decayEndTime(deadline);
-    }
-
     return this;
   }
 
@@ -149,54 +153,57 @@ export class RelayOrderBuilder extends OrderBuilder {
     return this;
   }
 
-  exclusiveFiller(
-    exclusiveFiller: string,
-    exclusivityOverrideBps: BigNumber
-  ): RelayOrderBuilder {
-    this.info.exclusiveFiller = exclusiveFiller;
-    this.info.exclusivityOverrideBps = exclusivityOverrideBps;
-    return this;
-  }
-
-  build(): DutchOrder {
-    invariant(this.info.decayStartTime !== undefined, "decayStartTime not set");
-    invariant(this.info.input !== undefined, "input not set");
-    invariant(this.info.decayEndTime !== undefined, "decayEndTime not set");
+  build(): RelayOrder {
+    invariant(this.info.deadline !== undefined, "deadline not set");
+    invariant(this.info.actions !== undefined, "actions not set");
+    invariant(this.info.inputs !== undefined, "inputs not set");
     invariant(
-      this.info.exclusiveFiller !== undefined,
-      "exclusiveFiller not set"
-    );
-    invariant(
-      this.info.exclusivityOverrideBps !== undefined,
-      "exclusivityOverrideBps not set"
-    );
-    invariant(
-      this.info.outputs !== undefined && this.info.outputs.length !== 0,
+      this.info.outputs !== undefined, // relay ordewrs allow no outputs
       "outputs not set"
     );
-    invariant(
-      this.info.decayEndTime !== undefined ||
-        this.getOrderInfo().deadline !== undefined,
-      "Must set either deadline or decayEndTime"
-    );
-    invariant(
-      !this.orderInfo.deadline ||
-        this.info.decayStartTime <= this.orderInfo.deadline,
-      `decayStartTime must be before or same as deadline: ${this.info.decayStartTime}`
-    );
-    invariant(
-      !this.orderInfo.deadline ||
-        this.info.decayEndTime <= this.orderInfo.deadline,
-      `decayEndTime must be before or same as deadline: ${this.info.decayEndTime}`
-    );
+    invariant(this.info.inputs.length !== 0, "inputs must be non-empty");
+    invariant(this.getOrderInfo().deadline !== undefined, "deadline not set");
 
-    return new DutchOrder(
+    this.info.inputs.forEach((input) => {
+      invariant(
+        input.decayEndTime !== undefined ||
+          this.orderInfo.deadline !== undefined,
+        "Must set either deadline or decayEndTime"
+      );
+      invariant(
+        !this.orderInfo.deadline ||
+          input.decayStartTime <= this.orderInfo.deadline,
+        `input decayStartTime must be before or same as deadline: ${input.decayStartTime}`
+      );
+      invariant(
+        !this.orderInfo.deadline ||
+          input.decayEndTime <= this.orderInfo.deadline,
+        `decayEndTime must be before or same as deadline: ${input.decayEndTime}`
+      );
+    });
+
+    this.info.outputs.forEach((output) => {
+      invariant(
+        output.decayEndTime !== undefined ||
+          this.orderInfo.deadline !== undefined,
+        "Must set either deadline or decayEndTime"
+      );
+      invariant(
+        !this.orderInfo.deadline ||
+          output.decayStartTime <= this.orderInfo.deadline,
+        `input decayStartTime must be before or same as deadline: ${output.decayStartTime}`
+      );
+      invariant(
+        !this.orderInfo.deadline ||
+          output.decayEndTime <= this.orderInfo.deadline,
+        `decayEndTime must be before or same as deadline: ${output.decayEndTime}`
+      );
+    });
+
+    return new RelayOrder(
       Object.assign(this.getOrderInfo(), {
-        decayStartTime: this.info.decayStartTime,
-        decayEndTime: this.info.decayEndTime,
-        exclusiveFiller: this.info.exclusiveFiller,
-        exclusivityOverrideBps: this.info.exclusivityOverrideBps,
-        input: this.info.input,
+        actions: this.info.actions,
+        inputs: this.info.inputs,
         outputs: this.info.outputs,
       }),
       this.chainId,
