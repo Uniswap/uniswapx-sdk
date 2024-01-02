@@ -3,7 +3,7 @@ import invariant from "tiny-invariant";
 
 import { OrderType, REACTOR_ADDRESS_MAPPING } from "../constants";
 import { MissingConfiguration } from "../errors";
-import { RelayOrder, RelayOrderInfo, RelayInput, RelayOutput } from "../order";
+import { RelayInput, RelayOrder, RelayOrderInfo, RelayOutput } from "../order";
 import { ValidationInfo } from "../order/validation";
 
 import { OrderBuilder } from "./OrderBuilder";

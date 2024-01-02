@@ -245,6 +245,28 @@ export class RelayOrder extends Order {
     );
   }
 
+  /// @notice Returns the earliest decayStartTime of all inputs
+  inputsDecayStartTime(): number {
+    return Math.min(...this.info.inputs.map((input) => input.decayStartTime));
+  }
+
+  /// @notice Returns the latest decayEndTime of all inputs
+  inputsDecayEndTime(): number {
+    return Math.max(...this.info.inputs.map((input) => input.decayEndTime));
+  }
+
+  /// @notice Returns the earliest decayStartTime of all outputs
+  outputsDecayStartTime(): number {
+    return Math.min(
+      ...this.info.outputs.map((output) => output.decayStartTime)
+    );
+  }
+
+  /// @notice Returns the latest decayEndTime of all outputs
+  outputsDecayEndTime(): number {
+    return Math.max(...this.info.outputs.map((output) => output.decayEndTime));
+  }
+
   /**
    * @inheritdoc order
    */
