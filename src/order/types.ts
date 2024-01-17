@@ -6,9 +6,8 @@ import { ResolvedOrder } from "../utils/OrderQuoter";
 
 import { CustomOrderValidation, parseValidation } from "./validation";
 
-export abstract class Order {
-  // TODO: maybe add generic types for more order-type specific info
-  abstract info: OrderInfo;
+export abstract class Order<Info = OrderInfo> {
+  abstract info: Info;
 
   // expose the chainid
   abstract chainId: number;
@@ -47,14 +46,6 @@ export abstract class Order {
    * @return The resolved order
    */
   abstract resolve(options: OrderResolutionOptions): ResolvedOrder;
-
-  /**
-   * Returns the parsed validation
-   * @return The parsed validation data for the order
-   */
-  get validation(): CustomOrderValidation {
-    return parseValidation(this.info);
-  }
 }
 
 export type TokenAmount = {
@@ -62,7 +53,7 @@ export type TokenAmount = {
   readonly amount: BigNumber;
 };
 
-export type TokenAmountWithRecipient = {
+export type ResolvedRelayInput = {
   readonly token: string;
   readonly amount: BigNumber;
   readonly recipient: string;

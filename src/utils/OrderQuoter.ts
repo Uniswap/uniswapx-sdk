@@ -8,7 +8,7 @@ import {
   OrderQuoter as OrderQuoterContract,
 } from "../contracts";
 import { MissingConfiguration } from "../errors";
-import { Order, TokenAmount, TokenAmountWithRecipient } from "../order";
+import { Order, TokenAmount, ResolvedRelayInput } from "../order";
 import { parseExclusiveFillerData, ValidationType } from "../order/validation";
 
 import { NonceManager } from "./NonceManager";
@@ -38,8 +38,7 @@ export interface ResolvedDutchOrder {
 
 export interface ResolvedRelayOrder {
   actions: string[];
-  inputs: TokenAmountWithRecipient[];
-  outputs: TokenAmountWithRecipient[];
+  inputs: ResolvedRelayInput[];
 }
 
 export interface OrderQuote {

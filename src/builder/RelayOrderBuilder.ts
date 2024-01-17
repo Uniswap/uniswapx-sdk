@@ -3,7 +3,7 @@ import invariant from "tiny-invariant";
 
 import { OrderType, REACTOR_ADDRESS_MAPPING } from "../constants";
 import { MissingConfiguration } from "../errors";
-import { RelayInput, RelayOrder, RelayOrderInfo, RelayOutput } from "../order";
+import { RelayOrder, RelayOrderInfo, RelayInput } from "../order";
 import { ValidationInfo } from "../order/validation";
 
 import { OrderBuilder } from "./OrderBuilder";
@@ -20,10 +20,8 @@ export class RelayOrderBuilder extends OrderBuilder {
       .deadline(order.info.deadline)
       .swapper(order.info.swapper)
       .nonce(order.info.nonce)
-      .validation({
-        additionalValidationContract: order.info.additionalValidationContract,
-        additionalValidationData: order.info.additionalValidationData,
-      });
+      .decayStartTime(order.info.decayStartTime)
+      .decayEndTime(order.info.decayEndTime)
 
     for (const action of order.info.actions) {
       builder.action(action);
@@ -33,9 +31,6 @@ export class RelayOrderBuilder extends OrderBuilder {
       builder.input(input);
     }
 
-    for (const output of order.info.outputs) {
-      builder.output(output);
-    }
     return builder;
   }
 
@@ -60,7 +55,6 @@ export class RelayOrderBuilder extends OrderBuilder {
 
     this.info = {
       actions: [],
-      outputs: [],
     };
   }
 
@@ -73,35 +67,29 @@ export class RelayOrderBuilder extends OrderBuilder {
     return this;
   }
 
+  decayStartTime(decayStartTime: number): RelayOrderBuilder {
+    this.info.decayStartTime = decayStartTime;
+    return this;
+  }
+
+  decayEndTime(decayEndTime: number): RelayOrderBuilder {
+    if (this.orderInfo.deadline === undefined) {
+      super.deadline(decayEndTime);
+    }
+
+    this.info.decayEndTime = decayEndTime;
+    return this;
+  }
+
   input(input: RelayInput): RelayOrderBuilder {
     if (!this.info.inputs) {
       this.info.inputs = [];
     }
     invariant(
-      input.startAmount.lte(input.endAmount),
-      `startAmount must be less than or equal than endAmount: ${input.startAmount.toString()}`
-    );
-    invariant(
-      input.decayStartTime <= input.decayEndTime,
-      `decayStartTime must be less than or equal to decayEndTime: ${input.decayStartTime}`
+      input.startAmount.lte(input.maxAmount),
+      `startAmount must be less than or equal than maxAmount: ${input.startAmount.toString()}`
     );
     this.info.inputs.push(input);
-    return this;
-  }
-
-  output(output: RelayOutput): RelayOrderBuilder {
-    if (!this.info.outputs) {
-      this.info.outputs = [];
-    }
-    invariant(
-      output.startAmount.gte(output.endAmount),
-      `startAmount must be greater than endAmount: ${output.startAmount.toString()}`
-    );
-    invariant(
-      output.decayStartTime <= output.decayEndTime,
-      `decayStartTime must be less than or equal to decayEndTime: ${output.decayStartTime}`
-    );
-    this.info.outputs.push(output);
     return this;
   }
 
@@ -125,86 +113,31 @@ export class RelayOrderBuilder extends OrderBuilder {
     return this;
   }
 
-  // ensures that we only change non fee outputs
-  nonFeeRecipient(
-    newRecipient: string,
-    feeRecipient?: string
-  ): RelayOrderBuilder {
-    invariant(
-      newRecipient !== feeRecipient,
-      `newRecipient must be different from feeRecipient: ${newRecipient}`
-    );
-    if (!this.info.outputs) {
-      return this;
-    }
-    this.info.outputs = this.info.outputs.map((output) => {
-      // if fee output then pass through
-      if (
-        feeRecipient &&
-        output.recipient.toLowerCase() === feeRecipient.toLowerCase()
-      ) {
-        return output;
-      }
-
-      return {
-        ...output,
-        recipient: newRecipient,
-      };
-    });
-    return this;
-  }
-
   build(): RelayOrder {
     invariant(this.info.actions !== undefined, "actions not set");
     invariant(this.info.inputs !== undefined, "inputs not set");
-    invariant(
-      this.info.outputs !== undefined, // relay ordewrs allow no outputs
-      "outputs not set"
-    );
     invariant(this.info.inputs.length !== 0, "inputs must be non-empty");
     invariant(this.getOrderInfo().deadline !== undefined, "deadline not set");
-
-    this.info.inputs.forEach((input) => {
-      invariant(
-        input.decayEndTime !== undefined ||
-          this.orderInfo.deadline !== undefined,
-        "Must set either deadline or decayEndTime"
-      );
-      invariant(
-        !this.orderInfo.deadline ||
-          input.decayStartTime <= this.orderInfo.deadline,
-        `input decayStartTime must be before or same as deadline: ${input.decayStartTime}`
-      );
-      invariant(
-        !this.orderInfo.deadline ||
-          input.decayEndTime <= this.orderInfo.deadline,
-        `decayEndTime must be before or same as deadline: ${input.decayEndTime}`
-      );
-    });
-
-    this.info.outputs.forEach((output) => {
-      invariant(
-        output.decayEndTime !== undefined ||
-          this.orderInfo.deadline !== undefined,
-        "Must set either deadline or decayEndTime"
-      );
-      invariant(
-        !this.orderInfo.deadline ||
-          output.decayStartTime <= this.orderInfo.deadline,
-        `input decayStartTime must be before or same as deadline: ${output.decayStartTime}`
-      );
-      invariant(
-        !this.orderInfo.deadline ||
-          output.decayEndTime <= this.orderInfo.deadline,
-        `decayEndTime must be before or same as deadline: ${output.decayEndTime}`
-      );
-    });
+    invariant(this.info.decayStartTime !== undefined, "decayStartTime not set");
+    invariant(this.info.decayEndTime !== undefined, "decayEndTime not set");
+      
+    invariant(
+      !this.orderInfo.deadline ||
+        this.info.decayStartTime <= this.orderInfo.deadline,
+      `input decayStartTime must be before or same as deadline: ${this.info.decayStartTime}`
+    );
+    invariant(
+      !this.orderInfo.deadline ||
+        this.info.decayEndTime <= this.orderInfo.deadline,
+      `decayEndTime must be before or same as deadline: ${this.info.decayEndTime}`
+    );
 
     return new RelayOrder(
       Object.assign(this.getOrderInfo(), {
         actions: this.info.actions,
         inputs: this.info.inputs,
-        outputs: this.info.outputs,
+        decayStartTime: this.info.decayStartTime,
+        decayEndTime: this.info.decayEndTime,
       }),
       this.chainId,
       this.permit2Address

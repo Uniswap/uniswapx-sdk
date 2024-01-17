@@ -40,18 +40,16 @@ export interface RelayOrderReactorInterface extends utils.Interface {
   functions: {
     "execute((bytes,bytes))": FunctionFragment;
     "executeBatch((bytes,bytes)[])": FunctionFragment;
-    "executeBatchWithCallback((bytes,bytes)[],bytes)": FunctionFragment;
-    "executeWithCallback((bytes,bytes),bytes)": FunctionFragment;
     "permit2()": FunctionFragment;
+    "universalRouter()": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
       | "execute"
       | "executeBatch"
-      | "executeBatchWithCallback"
-      | "executeWithCallback"
       | "permit2"
+      | "universalRouter"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -62,30 +60,22 @@ export interface RelayOrderReactorInterface extends utils.Interface {
     functionFragment: "executeBatch",
     values: [SignedOrderStruct[]]
   ): string;
-  encodeFunctionData(
-    functionFragment: "executeBatchWithCallback",
-    values: [SignedOrderStruct[], PromiseOrValue<BytesLike>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "executeWithCallback",
-    values: [SignedOrderStruct, PromiseOrValue<BytesLike>]
-  ): string;
   encodeFunctionData(functionFragment: "permit2", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "universalRouter",
+    values?: undefined
+  ): string;
 
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "executeBatch",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "executeBatchWithCallback",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "executeWithCallback",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "permit2", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "universalRouter",
+    data: BytesLike
+  ): Result;
 
   events: {
     "Fill(bytes32,address,address,uint256)": EventFragment;
@@ -144,19 +134,9 @@ export interface RelayOrderReactor extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    executeBatchWithCallback(
-      orders: SignedOrderStruct[],
-      callbackData: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    executeWithCallback(
-      order: SignedOrderStruct,
-      callbackData: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     permit2(overrides?: CallOverrides): Promise<[string]>;
+
+    universalRouter(overrides?: CallOverrides): Promise<[string]>;
   };
 
   execute(
@@ -169,19 +149,9 @@ export interface RelayOrderReactor extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  executeBatchWithCallback(
-    orders: SignedOrderStruct[],
-    callbackData: PromiseOrValue<BytesLike>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  executeWithCallback(
-    order: SignedOrderStruct,
-    callbackData: PromiseOrValue<BytesLike>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   permit2(overrides?: CallOverrides): Promise<string>;
+
+  universalRouter(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
     execute(order: SignedOrderStruct, overrides?: CallOverrides): Promise<void>;
@@ -191,19 +161,9 @@ export interface RelayOrderReactor extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    executeBatchWithCallback(
-      orders: SignedOrderStruct[],
-      callbackData: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    executeWithCallback(
-      order: SignedOrderStruct,
-      callbackData: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     permit2(overrides?: CallOverrides): Promise<string>;
+
+    universalRouter(overrides?: CallOverrides): Promise<string>;
   };
 
   filters: {
@@ -232,19 +192,9 @@ export interface RelayOrderReactor extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    executeBatchWithCallback(
-      orders: SignedOrderStruct[],
-      callbackData: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    executeWithCallback(
-      order: SignedOrderStruct,
-      callbackData: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     permit2(overrides?: CallOverrides): Promise<BigNumber>;
+
+    universalRouter(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -258,18 +208,8 @@ export interface RelayOrderReactor extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    executeBatchWithCallback(
-      orders: SignedOrderStruct[],
-      callbackData: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    executeWithCallback(
-      order: SignedOrderStruct,
-      callbackData: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
     permit2(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    universalRouter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

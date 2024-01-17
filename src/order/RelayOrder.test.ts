@@ -12,26 +12,14 @@ describe("RelayOrder", () => {
         reactor: "0x0000000000000000000000000000000000000000",
         swapper: "0x0000000000000000000000000000000000000000",
         nonce: BigNumber.from(10),
-        additionalValidationContract: ethers.constants.AddressZero,
-        additionalValidationData: "0x",
+        decayStartTime,
+        decayEndTime,
         actions: [],
         inputs: [
           {
             token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-            decayStartTime,
-            decayEndTime,
             startAmount: BigNumber.from("1000000"),
-            endAmount: BigNumber.from("1000000"),
-            recipient: "0x0000000000000000000000000000000000000000",
-          },
-        ],
-        outputs: [
-          {
-            token: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-            decayStartTime,
-            decayEndTime,
-            startAmount: BigNumber.from("1000000000000000000"),
-            endAmount: BigNumber.from("900000000000000000"),
+            maxAmount: BigNumber.from("1000000"),
             recipient: "0x0000000000000000000000000000000000000000",
           },
         ],
@@ -61,78 +49,42 @@ describe("RelayOrder", () => {
     it("resolves before decayStartTime", () => {
       const order = new RelayOrder(getOrderInfo({}), 1);
       let resolved = order.resolve({
-        timestamp: order.inputsDecayStartTime() - 100,
+        timestamp: order.info.decayStartTime - 100,
       });
       resolved.inputs.forEach((input, i) => {
         expect(input.token).toEqual(order.info.inputs[i].token);
         expect(input.amount).toEqual(order.info.inputs[i].startAmount);
-      });
-
-      resolved = order.resolve({
-        timestamp: order.outputsDecayStartTime(),
-      });
-      expect(resolved.outputs.length).toEqual(1);
-      resolved.outputs.forEach((output, i) => {
-        expect(output.token).toEqual(order.info.outputs[i].token);
-        expect(output.amount).toEqual(order.info.outputs[i].startAmount);
       });
     });
 
     it("resolves at decayStartTime", () => {
       const order = new RelayOrder(getOrderInfo({}), 1);
-      let resolved = order.resolve({ timestamp: order.inputsDecayStartTime() });
+      let resolved = order.resolve({ timestamp: order.info.decayStartTime });
       resolved.inputs.forEach((input, i) => {
         expect(input.token).toEqual(order.info.inputs[i].token);
         expect(input.amount).toEqual(order.info.inputs[i].startAmount);
-      });
-
-      resolved = order.resolve({
-        timestamp: order.outputsDecayStartTime(),
-      });
-      expect(resolved.outputs.length).toEqual(1);
-      resolved.outputs.forEach((output, i) => {
-        expect(output.token).toEqual(order.info.outputs[i].token);
-        expect(output.amount).toEqual(order.info.outputs[i].startAmount);
       });
     });
 
     it("resolves at decayEndTime", () => {
       const order = new RelayOrder(getOrderInfo({}), 1);
       let resolved = order.resolve({
-        timestamp: order.inputsDecayStartTime(),
+        timestamp: order.info.decayStartTime,
       });
       resolved.inputs.forEach((input, i) => {
         expect(input.token).toEqual(order.info.inputs[i].token);
-        expect(input.amount).toEqual(order.info.inputs[i].endAmount);
-      });
-
-      resolved = order.resolve({
-        timestamp: order.outputsDecayEndTime(),
-      });
-      expect(resolved.outputs.length).toEqual(1);
-      resolved.outputs.forEach((output, i) => {
-        expect(output.token).toEqual(order.info.outputs[i].token);
-        expect(output.amount).toEqual(order.info.outputs[i].endAmount);
+        expect(input.amount).toEqual(order.info.inputs[i].maxAmount);
       });
     });
 
     it("resolves after decayEndTime", () => {
       const order = new RelayOrder(getOrderInfo({}), 1);
       let resolved = order.resolve({
-        timestamp: order.inputsDecayEndTime() + 100,
+        timestamp: order.info.decayEndTime + 100,
       });
       resolved.inputs.forEach((input, i) => {
         expect(input.token).toEqual(order.info.inputs[i].token);
-        expect(input.amount).toEqual(order.info.inputs[i].endAmount);
-      });
-
-      resolved = order.resolve({
-        timestamp: order.outputsDecayEndTime() + 100,
-      });
-      expect(resolved.outputs.length).toEqual(1);
-      resolved.outputs.forEach((output, i) => {
-        expect(output.token).toEqual(order.info.outputs[i].token);
-        expect(output.amount).toEqual(order.info.outputs[i].endAmount);
+        expect(input.amount).toEqual(order.info.inputs[i].maxAmount);
       });
     });
   });

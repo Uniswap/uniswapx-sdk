@@ -14,102 +14,71 @@ import { getDecayedAmount } from "../utils/dutchDecay";
 
 import { Order, OrderInfo, OrderResolutionOptions } from "./types";
 
-export type RelayOutput = {
-  readonly token: string;
-  readonly startAmount: BigNumber;
-  readonly endAmount: BigNumber;
-  readonly decayStartTime: number;
-  readonly decayEndTime: number;
-  readonly recipient: string;
-};
-
-export type RelayOutputJSON = Omit<RelayOutput, "startAmount" | "endAmount"> & {
-  startAmount: string;
-  endAmount: string;
-};
-
 export type RelayInput = {
   readonly token: string;
-  readonly startAmount: BigNumber;
-  readonly endAmount: BigNumber;
-  readonly decayStartTime: number;
-  readonly decayEndTime: number;
   readonly recipient: string;
+  readonly startAmount: BigNumber;
+  readonly maxAmount: BigNumber;
 };
 
-export type RelayInputJSON = Omit<RelayInput, "startAmount" | "endAmount"> & {
+export type RelayInputJSON = Omit<RelayInput, "startAmount" | "maxAmount"> & {
   startAmount: string;
-  endAmount: string;
+  maxAmount: string;
 };
 
-export type RelayOrderInfo = OrderInfo & {
-  actions: string[];
+type RelayOrderNestedOrderInfo = Omit<OrderInfo, "additionalValidationContract" | "additionalValidationData" >;
+
+export type RelayOrderInfo = RelayOrderNestedOrderInfo & {
   inputs: RelayInput[];
-  outputs: RelayOutput[];
+  decayStartTime: number;
+  decayEndTime: number;
+  actions: string[];
 };
 
 export type RelayOrderInfoJSON = Omit<
   RelayOrderInfo,
-  "nonce" | "inputs" | "outputs"
+  "nonce" | "inputs"
 > & {
   nonce: string;
   actions: string[];
   inputs: RelayInputJSON[];
-  outputs: RelayOutputJSON[];
 };
 
 type WitnessInfo = {
-  info: OrderInfo;
+  reactor: string;
+  swapper: string;
+  startAmounts: BigNumber[];
+  recipients: string[];
+  decayStartTime: number;
+  decayEndTime: number;
   actions: string[];
-  inputs: RelayInput[];
-  outputs: RelayOutput[];
 };
 
 const RELAY_ORDER_TYPES = {
   RelayOrder: [
-    { name: "info", type: "OrderInfo" },
-    { name: "actions", type: "bytes[]" },
-    { name: "inputs", type: "RelayInput[]" },
-    { name: "outputs", type: "RelayOutput[]" },
-  ],
-  OrderInfo: [
     { name: "reactor", type: "address" },
     { name: "swapper", type: "address" },
-    { name: "nonce", type: "uint256" },
-    { name: "deadline", type: "uint256" },
-    { name: "additionalValidationContract", type: "address" },
-    { name: "additionalValidationData", type: "bytes" },
-  ],
-  RelayInput: [
-    { name: "token", type: "address" },
+    { name: "startAmounts", type: "uint256[]" },
+    { name: "recipients", type: "address[]" },
     { name: "decayStartTime", type: "uint256" },
     { name: "decayEndTime", type: "uint256" },
-    { name: "startAmount", type: "uint256" },
-    { name: "endAmount", type: "uint256" },
-    { name: "recipient", type: "address" },
-  ],
-  RelayOutput: [
-    { name: "token", type: "address" },
-    { name: "decayStartTime", type: "uint256" },
-    { name: "decayEndTime", type: "uint256" },
-    { name: "startAmount", type: "uint256" },
-    { name: "endAmount", type: "uint256" },
-    { name: "recipient", type: "address" },
+    { name: "actions", type: "bytes[]" },
   ],
 };
 
 const RELAY_ORDER_ABI = [
   "tuple(" +
     [
-      "tuple(address,address,uint256,uint256,address,bytes)",
+      "tuple(address,address,uint256,uint256)",
+      "tuple(address,address,uint256,uint256)[]",
+      "uint256",
+      "uint256",
       "bytes[]",
-      "tuple(address,uint256,uint256,uint256,uint256,address)[]",
-      "tuple(address,uint256,uint256,uint256,uint256,address)[]",
     ].join(",") +
     ")",
 ];
 
-export class RelayOrder extends Order {
+export class RelayOrder extends Order<RelayOrderNestedOrderInfo> {
   public permit2Address: string;
 
   constructor(
@@ -138,19 +107,9 @@ export class RelayOrder extends Order {
         nonce: BigNumber.from(json.nonce),
         inputs: json.inputs.map((input) => ({
           token: input.token,
-          decayStartTime: input.decayStartTime,
-          decayEndTime: input.decayEndTime,
           startAmount: BigNumber.from(input.startAmount),
-          endAmount: BigNumber.from(input.endAmount),
+          maxAmount: BigNumber.from(input.maxAmount),
           recipient: input.recipient,
-        })),
-        outputs: json.outputs.map((output) => ({
-          token: output.token,
-          decayStartTime: output.decayStartTime,
-          decayEndTime: output.decayEndTime,
-          startAmount: BigNumber.from(output.startAmount),
-          endAmount: BigNumber.from(output.endAmount),
-          recipient: output.recipient,
         })),
       },
       chainId,
@@ -168,12 +127,11 @@ export class RelayOrder extends Order {
           swapper,
           nonce,
           deadline,
-          additionalValidationContract,
-          additionalValidationData,
         ],
-        actions,
         inputs,
-        outputs,
+        decayStartTime,
+        decayEndTime,
+        actions,
       ],
     ] = decoded;
     return new RelayOrder(
@@ -182,21 +140,14 @@ export class RelayOrder extends Order {
         swapper,
         nonce,
         deadline: deadline.toNumber(),
-        additionalValidationContract,
-        additionalValidationData,
-        actions: actions,
         inputs: inputs.map(
           ([
             token,
-            decayStartTime,
-            decayEndTime,
             startAmount,
-            endAmount,
+            maxAmount,
             recipient,
           ]: [
             string,
-            BigNumber,
-            BigNumber,
             number,
             number,
             string,
@@ -204,67 +155,19 @@ export class RelayOrder extends Order {
           ]) => {
             return {
               token,
-              decayStartTime: decayStartTime.toNumber(),
-              decayEndTime: decayEndTime.toNumber(),
               startAmount,
-              endAmount,
+              maxAmount,
               recipient,
             };
           }
         ),
-        outputs: outputs.map(
-          ([
-            token,
-            decayStartTime,
-            decayEndTime,
-            startAmount,
-            endAmount,
-            recipient,
-          ]: [
-            string,
-            BigNumber,
-            BigNumber,
-            number,
-            number,
-            string,
-            boolean
-          ]) => {
-            return {
-              token,
-              decayStartTime: decayStartTime.toNumber(),
-              decayEndTime: decayEndTime.toNumber(),
-              startAmount,
-              endAmount,
-              recipient,
-            };
-          }
-        ),
+        decayStartTime: decayStartTime.toNumber(),
+        decayEndTime: decayEndTime.toNumber(),
+        actions: actions,
       },
       chainId,
       permit2
     );
-  }
-
-  /// @notice Returns the earliest decayStartTime of all inputs
-  inputsDecayStartTime(): number {
-    return Math.min(...this.info.inputs.map((input) => input.decayStartTime));
-  }
-
-  /// @notice Returns the latest decayEndTime of all inputs
-  inputsDecayEndTime(): number {
-    return Math.max(...this.info.inputs.map((input) => input.decayEndTime));
-  }
-
-  /// @notice Returns the earliest decayStartTime of all outputs
-  outputsDecayStartTime(): number {
-    return Math.min(
-      ...this.info.outputs.map((output) => output.decayStartTime)
-    );
-  }
-
-  /// @notice Returns the latest decayEndTime of all outputs
-  outputsDecayEndTime(): number {
-    return Math.max(...this.info.outputs.map((output) => output.decayEndTime));
   }
 
   /**
@@ -281,24 +184,14 @@ export class RelayOrder extends Order {
       swapper: this.info.swapper,
       nonce: this.info.nonce.toString(),
       deadline: this.info.deadline,
-      additionalValidationContract: this.info.additionalValidationContract,
-      additionalValidationData: this.info.additionalValidationData,
       actions: this.info.actions,
+      decayStartTime: this.info.decayStartTime,
+      decayEndTime: this.info.decayEndTime,
       inputs: this.info.inputs.map((input) => ({
         token: input.token,
-        decayStartTime: input.decayStartTime,
-        decayEndTime: input.decayEndTime,
         startAmount: input.startAmount.toString(),
-        endAmount: input.endAmount.toString(),
+        maxAmount: input.maxAmount.toString(),
         recipient: input.recipient,
-      })),
-      outputs: this.info.outputs.map((output) => ({
-        token: output.token,
-        decayStartTime: output.decayStartTime,
-        decayEndTime: output.decayEndTime,
-        startAmount: output.startAmount.toString(),
-        endAmount: output.endAmount.toString(),
-        recipient: output.recipient,
       })),
     };
   }
@@ -315,26 +208,16 @@ export class RelayOrder extends Order {
           this.info.swapper,
           this.info.nonce,
           this.info.deadline,
-          this.info.additionalValidationContract,
-          this.info.additionalValidationData,
         ],
-        this.info.actions,
         this.info.inputs.map((input) => [
           input.token,
-          input.decayStartTime,
-          input.decayEndTime,
           input.startAmount,
-          input.endAmount,
+          input.maxAmount,
           input.recipient,
         ]),
-        this.info.outputs.map((output) => [
-          output.token,
-          output.decayStartTime,
-          output.decayEndTime,
-          output.startAmount,
-          output.endAmount,
-          output.recipient,
-        ]),
+        this.info.decayStartTime,
+        this.info.decayEndTime,
+        this.info.actions,
       ],
     ]);
   }
@@ -388,29 +271,14 @@ export class RelayOrder extends Order {
           token: input.token,
           amount: getDecayedAmount(
             {
-              decayStartTime: input.decayStartTime,
-              decayEndTime: input.decayEndTime,
+              decayStartTime: this.info.decayStartTime,
+              decayEndTime: this.info.decayEndTime,
               startAmount: input.startAmount,
-              endAmount: input.endAmount,
+              endAmount: input.maxAmount,
             },
             options.timestamp
           ),
           recipient: input.recipient,
-        };
-      }),
-      outputs: this.info.outputs.map((output) => {
-        return {
-          token: output.token,
-          amount: getDecayedAmount(
-            {
-              decayStartTime: output.decayStartTime,
-              decayEndTime: output.decayEndTime,
-              startAmount: output.startAmount,
-              endAmount: output.endAmount,
-            },
-            options.timestamp
-          ),
-          recipient: output.recipient,
         };
       }),
     };
@@ -420,7 +288,7 @@ export class RelayOrder extends Order {
     return {
       permitted: this.info.inputs.map((input) => ({
         token: input.token,
-        amount: input.endAmount,
+        amount: input.maxAmount,
       })),
       spender: this.info.reactor,
       nonce: this.info.nonce,
@@ -430,17 +298,13 @@ export class RelayOrder extends Order {
 
   private witnessInfo(): WitnessInfo {
     return {
-      info: {
-        reactor: this.info.reactor,
-        swapper: this.info.swapper,
-        nonce: this.info.nonce,
-        deadline: this.info.deadline,
-        additionalValidationContract: this.info.additionalValidationContract,
-        additionalValidationData: this.info.additionalValidationData,
-      },
+      reactor: this.info.reactor,
+      swapper: this.info.swapper,
+      decayStartTime: this.info.decayStartTime,
+      decayEndTime: this.info.decayEndTime,
+      startAmounts: this.info.inputs.map((input) => input.startAmount),
+      recipients: this.info.inputs.map((input) => input.recipient),
       actions: this.info.actions,
-      inputs: this.info.inputs,
-      outputs: this.info.outputs,
     };
   }
 

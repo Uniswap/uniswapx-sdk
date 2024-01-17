@@ -72,5 +72,5 @@ export abstract class OrderBuilder {
     };
   }
 
-  abstract build(): Order;
+  abstract build(): Order<Partial<OrderInfo>>;
 }
