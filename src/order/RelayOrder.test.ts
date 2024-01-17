@@ -23,6 +23,8 @@ describe("RelayOrder", () => {
             recipient: "0x0000000000000000000000000000000000000000",
           },
         ],
+        additionalValidationContract: "",
+        additionalValidationData: "",
       },
       data
     );

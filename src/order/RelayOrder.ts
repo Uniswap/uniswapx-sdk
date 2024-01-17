@@ -26,13 +26,15 @@ export type RelayInputJSON = Omit<RelayInput, "startAmount" | "maxAmount"> & {
   maxAmount: string;
 };
 
-type RelayOrderNestedOrderInfo = Omit<OrderInfo, "additionalValidationContract" | "additionalValidationData" >;
+// type RelayOrderNestedOrderInfo = Omit<OrderInfo, "additionalValidationContract" | "additionalValidationData" >;
 
-export type RelayOrderInfo = RelayOrderNestedOrderInfo & {
+export type RelayOrderInfo = OrderInfo & {
   inputs: RelayInput[];
   decayStartTime: number;
   decayEndTime: number;
   actions: string[];
+  additionalValidationContract?: string;
+  additionalValidationData?: string;
 };
 
 export type RelayOrderInfoJSON = Omit<
@@ -78,7 +80,7 @@ const RELAY_ORDER_ABI = [
     ")",
 ];
 
-export class RelayOrder extends Order<RelayOrderNestedOrderInfo> {
+export class RelayOrder extends Order {
   public permit2Address: string;
 
   constructor(
@@ -143,9 +145,9 @@ export class RelayOrder extends Order<RelayOrderNestedOrderInfo> {
         inputs: inputs.map(
           ([
             token,
+            recipient,
             startAmount,
             maxAmount,
-            recipient,
           ]: [
             string,
             number,
@@ -164,6 +166,8 @@ export class RelayOrder extends Order<RelayOrderNestedOrderInfo> {
         decayStartTime: decayStartTime.toNumber(),
         decayEndTime: decayEndTime.toNumber(),
         actions: actions,
+        additionalValidationContract: "",
+        additionalValidationData: "",
       },
       chainId,
       permit2
@@ -193,6 +197,8 @@ export class RelayOrder extends Order<RelayOrderNestedOrderInfo> {
         maxAmount: input.maxAmount.toString(),
         recipient: input.recipient,
       })),
+      additionalValidationContract: this.info.additionalValidationContract,
+      additionalValidationData: this.info.additionalValidationData
     };
   }
 
@@ -211,9 +217,9 @@ export class RelayOrder extends Order<RelayOrderNestedOrderInfo> {
         ],
         this.info.inputs.map((input) => [
           input.token,
+          input.recipient,
           input.startAmount,
           input.maxAmount,
-          input.recipient,
         ]),
         this.info.decayStartTime,
         this.info.decayEndTime,

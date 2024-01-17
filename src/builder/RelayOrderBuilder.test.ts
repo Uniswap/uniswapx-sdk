@@ -1,7 +1,6 @@
 import { BigNumber } from "ethers";
 
 import { RelayOrder } from "../order/RelayOrder";
-import { encodeExclusiveFillerData } from "../order/validation";
 
 import { RelayOrderBuilder } from "./RelayOrderBuilder";
 
@@ -84,19 +83,8 @@ describe("RelayOrderBuilder", () => {
 
   it("Regenerates builder from order json", () => {
     const deadline = Math.floor(Date.now() / 1000) + 1000;
-    const fillerAddress = "0x1111111111111111111111111111111111111111";
-    const additionalValidationContract =
-      "0x2222222222222222222222222222222222222222";
-    const timestamp = Math.floor(Date.now() / 1000) + 100;
-    const validationInfo = encodeExclusiveFillerData(
-      fillerAddress,
-      timestamp,
-      1,
-      additionalValidationContract
-    );
     const order = builder
       .deadline(deadline)
-
       .swapper("0x0000000000000000000000000000000000000001")
       .nonce(BigNumber.from(100))
       .decayStartTime(deadline - 100)
@@ -104,13 +92,10 @@ describe("RelayOrderBuilder", () => {
       .action("")
       .input({
         token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-        
         startAmount: BigNumber.from("1000000"),
         maxAmount: BigNumber.from("1000000"),
         recipient: "0x0000000000000000000000000000000000000000",
-      })
-      .validation(validationInfo)
-      
+      })      
       .build();
 
     const json = order.toJSON();
@@ -159,7 +144,7 @@ describe("RelayOrderBuilder", () => {
           recipient: "0x0000000000000000000000000000000000000000",
         })
         .build()
-    ).toThrow("startAmount must be less than maxAmount: 100");
+    ).toThrow("startAmount must be less than or equal than maxAmount: 100");
   });
 
   it("Deadline already passed", () => {
