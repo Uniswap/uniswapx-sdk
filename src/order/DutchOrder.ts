@@ -6,6 +6,7 @@ import {
   Witness,
 } from "@uniswap/permit2-sdk";
 import { BigNumber, ethers } from "ethers";
+import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 
 import { BPS, PERMIT2_MAPPING } from "../constants";
 import { MissingConfiguration } from "../errors";
@@ -21,7 +22,6 @@ import {
   OrderInfo,
   OrderResolutionOptions,
 } from "./types";
-import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 
 export function id(text: string): string {
   return keccak256(toUtf8Bytes(text));

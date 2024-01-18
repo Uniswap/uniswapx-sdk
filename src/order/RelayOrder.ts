@@ -37,10 +37,7 @@ export type RelayOrderInfo = OrderInfo & {
   additionalValidationData?: string;
 };
 
-export type RelayOrderInfoJSON = Omit<
-  RelayOrderInfo,
-  "nonce" | "inputs"
-> & {
+export type RelayOrderInfoJSON = Omit<RelayOrderInfo, "nonce" | "inputs"> & {
   nonce: string;
   actions: string[];
   inputs: RelayInputJSON[];
@@ -124,12 +121,7 @@ export class RelayOrder extends Order {
     const decoded = abiCoder.decode(RELAY_ORDER_ABI, encoded);
     const [
       [
-        [
-          reactor,
-          swapper,
-          nonce,
-          deadline,
-        ],
+        [reactor, swapper, nonce, deadline],
         inputs,
         decayStartTime,
         decayEndTime,
@@ -143,12 +135,7 @@ export class RelayOrder extends Order {
         nonce,
         deadline: deadline.toNumber(),
         inputs: inputs.map(
-          ([
-            token,
-            recipient,
-            startAmount,
-            maxAmount,
-          ]: [
+          ([token, recipient, startAmount, maxAmount]: [
             string,
             number,
             number,
@@ -198,7 +185,7 @@ export class RelayOrder extends Order {
         recipient: input.recipient,
       })),
       additionalValidationContract: this.info.additionalValidationContract,
-      additionalValidationData: this.info.additionalValidationData
+      additionalValidationData: this.info.additionalValidationData,
     };
   }
 

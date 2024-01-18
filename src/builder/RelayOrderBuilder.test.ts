@@ -26,7 +26,7 @@ describe("RelayOrderBuilder", () => {
         maxAmount: BigNumber.from("1000000"),
         recipient: "0x0000000000000000000000000000000000000000",
       })
-      
+
       .build();
 
     expect(order.info.decayStartTime).toEqual(deadline - 100);
@@ -45,12 +45,12 @@ describe("RelayOrderBuilder", () => {
       .action("")
       .input({
         token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-        
+
         startAmount: BigNumber.from("1000000"),
         maxAmount: BigNumber.from("1000000"),
         recipient: "0x0000000000000000000000000000000000000000",
       })
-      
+
       .build();
 
     expect(order.info.decayStartTime).toEqual(deadline - 100);
@@ -69,12 +69,12 @@ describe("RelayOrderBuilder", () => {
       .decayEndTime(deadline)
       .input({
         token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-        
+
         startAmount: BigNumber.from("1000000"),
         maxAmount: BigNumber.from("1000000"),
         recipient: "0x0000000000000000000000000000000000000000",
       })
-      
+
       .build();
 
     const regenerated = RelayOrderBuilder.fromOrder(order).build();
@@ -95,7 +95,7 @@ describe("RelayOrderBuilder", () => {
         startAmount: BigNumber.from("1000000"),
         maxAmount: BigNumber.from("1000000"),
         recipient: "0x0000000000000000000000000000000000000000",
-      })      
+      })
       .build();
 
     const json = order.toJSON();
@@ -180,7 +180,7 @@ describe("RelayOrderBuilder", () => {
         startAmount: BigNumber.from("1000000"),
         maxAmount: BigNumber.from("1200000"),
         recipient: "0x0000000000000000000000000000000000000000",
-      })
+      });
 
     expect(() => order.build()).toThrow(
       `decayStartTime must be before or same as deadline: ${deadline + 1}`

@@ -3,7 +3,7 @@ import invariant from "tiny-invariant";
 
 import { OrderType, REACTOR_ADDRESS_MAPPING } from "../constants";
 import { MissingConfiguration } from "../errors";
-import { RelayOrder, RelayOrderInfo, RelayInput } from "../order";
+import { RelayInput, RelayOrder, RelayOrderInfo } from "../order";
 import { ValidationInfo } from "../order/validation";
 
 import { OrderBuilder } from "./OrderBuilder";
@@ -21,7 +21,7 @@ export class RelayOrderBuilder extends OrderBuilder {
       .swapper(order.info.swapper)
       .nonce(order.info.nonce)
       .decayStartTime(order.info.decayStartTime)
-      .decayEndTime(order.info.decayEndTime)
+      .decayEndTime(order.info.decayEndTime);
 
     for (const action of order.info.actions) {
       builder.action(action);
@@ -120,7 +120,7 @@ export class RelayOrderBuilder extends OrderBuilder {
     invariant(this.getOrderInfo().deadline !== undefined, "deadline not set");
     invariant(this.info.decayStartTime !== undefined, "decayStartTime not set");
     invariant(this.info.decayEndTime !== undefined, "decayEndTime not set");
-      
+
     invariant(
       !this.orderInfo.deadline ||
         this.info.decayStartTime <= this.orderInfo.deadline,

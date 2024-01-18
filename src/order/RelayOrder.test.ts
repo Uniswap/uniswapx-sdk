@@ -50,7 +50,7 @@ describe("RelayOrder", () => {
   describe("resolve", () => {
     it("resolves before decayStartTime", () => {
       const order = new RelayOrder(getOrderInfo({}), 1);
-      let resolved = order.resolve({
+      const resolved = order.resolve({
         timestamp: order.info.decayStartTime - 100,
       });
       resolved.inputs.forEach((input, i) => {
@@ -61,7 +61,7 @@ describe("RelayOrder", () => {
 
     it("resolves at decayStartTime", () => {
       const order = new RelayOrder(getOrderInfo({}), 1);
-      let resolved = order.resolve({ timestamp: order.info.decayStartTime });
+      const resolved = order.resolve({ timestamp: order.info.decayStartTime });
       resolved.inputs.forEach((input, i) => {
         expect(input.token).toEqual(order.info.inputs[i].token);
         expect(input.amount).toEqual(order.info.inputs[i].startAmount);
@@ -70,7 +70,7 @@ describe("RelayOrder", () => {
 
     it("resolves at decayEndTime", () => {
       const order = new RelayOrder(getOrderInfo({}), 1);
-      let resolved = order.resolve({
+      const resolved = order.resolve({
         timestamp: order.info.decayStartTime,
       });
       resolved.inputs.forEach((input, i) => {
@@ -81,7 +81,7 @@ describe("RelayOrder", () => {
 
     it("resolves after decayEndTime", () => {
       const order = new RelayOrder(getOrderInfo({}), 1);
-      let resolved = order.resolve({
+      const resolved = order.resolve({
         timestamp: order.info.decayEndTime + 100,
       });
       resolved.inputs.forEach((input, i) => {
