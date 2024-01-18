@@ -190,13 +190,8 @@ describe("RelayOrderBuilder", () => {
   it("Does not throw before an order has not been finished building", () => {
     const deadline = Math.floor(Date.now() / 1000) + 1000;
     expect(() =>
-      // input with invalid maxAmount
-      builder.deadline(deadline).input({
-        token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-        startAmount: BigNumber.from("1000000"),
-        maxAmount: BigNumber.from("0"),
-        recipient: "0x0000000000000000000000000000000000000000",
-      })
+      // invalid decayStartTime
+      builder.deadline(deadline).decayStartTime(deadline + 1)
     ).not.toThrowError();
   });
 
