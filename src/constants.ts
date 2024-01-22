@@ -26,6 +26,7 @@ export enum KNOWN_EVENT_SIGNATURES {
 
 export enum OrderType {
   Dutch = "Dutch",
+  Relay = "Relay",
 }
 
 type Reactors = {
@@ -40,15 +41,19 @@ type ReverseReactorMapping = {
 export const REACTOR_ADDRESS_MAPPING: ReactorMapping = {
   1: {
     [OrderType.Dutch]: "0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4",
+    [OrderType.Relay]: "0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4",
   },
   5: {
     [OrderType.Dutch]: "0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4",
+    [OrderType.Relay]: "0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4",
   },
   137: {
     [OrderType.Dutch]: "0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4",
+    [OrderType.Relay]: "0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4",
   },
   12341234: {
     [OrderType.Dutch]: "0xbD7F9D0239f81C94b728d827a87b9864972661eC",
+    [OrderType.Relay]: "0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4",
   },
 };
 

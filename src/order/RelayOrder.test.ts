@@ -22,9 +22,7 @@ describe("RelayOrder", () => {
             maxAmount: BigNumber.from("1000000"),
             recipient: "0x0000000000000000000000000000000000000000",
           },
-        ],
-        additionalValidationContract: "",
-        additionalValidationData: "",
+        ]
       },
       data
     );

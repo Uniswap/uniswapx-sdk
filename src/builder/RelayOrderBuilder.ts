@@ -4,15 +4,12 @@ import invariant from "tiny-invariant";
 import { OrderType, REACTOR_ADDRESS_MAPPING } from "../constants";
 import { MissingConfiguration } from "../errors";
 import { RelayInput, RelayOrder, RelayOrderInfo } from "../order";
-import { ValidationInfo } from "../order/validation";
-
-import { OrderBuilder } from "./OrderBuilder";
 
 /**
  * Helper builder for generating relay orders
  */
-export class RelayOrderBuilder extends OrderBuilder {
-  private info: Partial<RelayOrderInfo>;
+export class RelayOrderBuilder {
+  protected info: Partial<RelayOrderInfo> = {};
 
   static fromOrder(order: RelayOrder): RelayOrderBuilder {
     // note chainId not used if passing in true reactor address
@@ -39,23 +36,39 @@ export class RelayOrderBuilder extends OrderBuilder {
     reactorAddress?: string,
     private permit2Address?: string
   ) {
-    super();
-
     if (reactorAddress) {
       this.reactor(reactorAddress);
     } else if (
       REACTOR_ADDRESS_MAPPING[chainId] &&
-      REACTOR_ADDRESS_MAPPING[chainId][OrderType.Dutch]
+      REACTOR_ADDRESS_MAPPING[chainId][OrderType.Relay]
     ) {
-      const reactorAddress = REACTOR_ADDRESS_MAPPING[chainId][OrderType.Dutch];
+      const reactorAddress = REACTOR_ADDRESS_MAPPING[chainId][OrderType.Relay];
       this.reactor(reactorAddress);
     } else {
       throw new MissingConfiguration("reactor", chainId.toString());
     }
 
-    this.info = {
-      actions: [],
-    };
+    this.info.actions = [];
+  }
+
+  protected reactor(reactor: string): RelayOrderBuilder {
+    this.info.reactor = reactor;
+    return this;
+  }
+
+  deadline(deadline: number): RelayOrderBuilder {
+    this.info.deadline = deadline;
+    return this;
+  }
+
+  nonce(nonce: BigNumber): RelayOrderBuilder {
+    this.info.nonce = nonce;
+    return this;
+  }
+
+  swapper(swapper: string): RelayOrderBuilder {
+    this.info.swapper = swapper;
+    return this;
   }
 
   // TODO: perform some calldata validation here
@@ -73,8 +86,8 @@ export class RelayOrderBuilder extends OrderBuilder {
   }
 
   decayEndTime(decayEndTime: number): RelayOrderBuilder {
-    if (this.orderInfo.deadline === undefined) {
-      super.deadline(decayEndTime);
+    if (this.info.deadline === undefined) {
+      this.info.deadline = decayEndTime;
     }
 
     this.info.decayEndTime = decayEndTime;
@@ -93,47 +106,38 @@ export class RelayOrderBuilder extends OrderBuilder {
     return this;
   }
 
-  deadline(deadline: number): RelayOrderBuilder {
-    super.deadline(deadline);
-    return this;
-  }
-
-  swapper(swapper: string): RelayOrderBuilder {
-    super.swapper(swapper);
-    return this;
-  }
-
-  nonce(nonce: BigNumber): RelayOrderBuilder {
-    super.nonce(nonce);
-    return this;
-  }
-
-  validation(info: ValidationInfo): RelayOrderBuilder {
-    super.validation(info);
-    return this;
-  }
-
   build(): RelayOrder {
+    invariant(this.info.reactor !== undefined, "reactor not set");
+    invariant(this.info.nonce !== undefined, "nonce not set");
+    invariant(this.info.deadline !== undefined, "deadline not set");
+    invariant(
+      this.info.deadline > Date.now() / 1000,
+      `Deadline must be in the future: ${this.info.deadline}`
+    );
+    invariant(this.info.swapper !== undefined, "swapper not set");
+    invariant(this.info.decayStartTime !== undefined, "decayStartTime not set");
+    invariant(this.info.decayEndTime !== undefined, "decayEndTime not set");
     invariant(this.info.actions !== undefined, "actions not set");
     invariant(this.info.inputs !== undefined, "inputs not set");
     invariant(this.info.inputs.length !== 0, "inputs must be non-empty");
-    invariant(this.getOrderInfo().deadline !== undefined, "deadline not set");
-    invariant(this.info.decayStartTime !== undefined, "decayStartTime not set");
-    invariant(this.info.decayEndTime !== undefined, "decayEndTime not set");
 
     invariant(
-      !this.orderInfo.deadline ||
-        this.info.decayStartTime <= this.orderInfo.deadline,
+      !this.info.deadline ||
+        this.info.decayStartTime <= this.info.deadline,
       `input decayStartTime must be before or same as deadline: ${this.info.decayStartTime}`
     );
     invariant(
-      !this.orderInfo.deadline ||
-        this.info.decayEndTime <= this.orderInfo.deadline,
+      !this.info.deadline ||
+        this.info.decayEndTime <= this.info.deadline,
       `decayEndTime must be before or same as deadline: ${this.info.decayEndTime}`
     );
 
     return new RelayOrder(
-      Object.assign(this.getOrderInfo(), {
+      Object.assign(this.info, {
+        reactor: this.info.reactor,
+        swapper: this.info.swapper,
+        nonce: this.info.nonce,
+        deadline: this.info.deadline,
         actions: this.info.actions,
         inputs: this.info.inputs,
         decayStartTime: this.info.decayStartTime,

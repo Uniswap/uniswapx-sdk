@@ -12,7 +12,7 @@ import { MissingConfiguration } from "../errors";
 import { ResolvedRelayOrder } from "../utils/OrderQuoter";
 import { getDecayedAmount } from "../utils/dutchDecay";
 
-import { Order, OrderInfo, OrderResolutionOptions } from "./types";
+import { OrderInfo, OrderResolutionOptions } from "./types";
 
 export type RelayInput = {
   readonly token: string;
@@ -26,15 +26,13 @@ export type RelayInputJSON = Omit<RelayInput, "startAmount" | "maxAmount"> & {
   maxAmount: string;
 };
 
-// type RelayOrderNestedOrderInfo = Omit<OrderInfo, "additionalValidationContract" | "additionalValidationData" >;
+type RelayOrderNestedOrderInfo = Omit<OrderInfo, "additionalValidationContract" | "additionalValidationData" >;
 
-export type RelayOrderInfo = OrderInfo & {
+export type RelayOrderInfo = RelayOrderNestedOrderInfo & {
   inputs: RelayInput[];
   decayStartTime: number;
   decayEndTime: number;
   actions: string[];
-  additionalValidationContract?: string;
-  additionalValidationData?: string;
 };
 
 export type RelayOrderInfoJSON = Omit<RelayOrderInfo, "nonce" | "inputs"> & {
@@ -77,7 +75,7 @@ const RELAY_ORDER_ABI = [
     ")",
 ];
 
-export class RelayOrder extends Order {
+export class RelayOrder {
   public permit2Address: string;
 
   constructor(
@@ -85,7 +83,6 @@ export class RelayOrder extends Order {
     public readonly chainId: number,
     readonly _permit2Address?: string
   ) {
-    super();
     if (_permit2Address) {
       this.permit2Address = _permit2Address;
     } else if (PERMIT2_MAPPING[chainId]) {
@@ -152,9 +149,7 @@ export class RelayOrder extends Order {
         ),
         decayStartTime: decayStartTime.toNumber(),
         decayEndTime: decayEndTime.toNumber(),
-        actions: actions,
-        additionalValidationContract: "",
-        additionalValidationData: "",
+        actions: actions
       },
       chainId,
       permit2
@@ -183,9 +178,7 @@ export class RelayOrder extends Order {
         startAmount: input.startAmount.toString(),
         maxAmount: input.maxAmount.toString(),
         recipient: input.recipient,
-      })),
-      additionalValidationContract: this.info.additionalValidationContract,
-      additionalValidationData: this.info.additionalValidationData,
+      }))
     };
   }
 
