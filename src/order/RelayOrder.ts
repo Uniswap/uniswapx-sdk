@@ -1,7 +1,7 @@
 import { SignatureLike } from "@ethersproject/bytes";
 import {
   PermitBatchTransferFrom,
-  PermitTransferFromData,
+  PermitBatchTransferFromData,
   SignatureTransfer,
   Witness,
 } from "@uniswap/permit2-sdk";
@@ -228,13 +228,13 @@ export class RelayOrder {
   /**
    * @inheritdoc Order
    */
-  permitData(): PermitTransferFromData {
+  permitData(): PermitBatchTransferFromData {
     return SignatureTransfer.getPermitData(
       this.toPermit(),
       this.permit2Address,
       this.chainId,
       this.witness()
-    ) as PermitTransferFromData;
+    ) as PermitBatchTransferFromData;
   }
 
   /**
