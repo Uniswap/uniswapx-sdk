@@ -26,7 +26,10 @@ export type RelayInputJSON = Omit<RelayInput, "startAmount" | "maxAmount"> & {
   maxAmount: string;
 };
 
-type RelayOrderNestedOrderInfo = Omit<OrderInfo, "additionalValidationContract" | "additionalValidationData" >;
+type RelayOrderNestedOrderInfo = Omit<
+  OrderInfo,
+  "additionalValidationContract" | "additionalValidationData"
+>;
 
 export type RelayOrderInfo = RelayOrderNestedOrderInfo & {
   inputs: RelayInput[];
@@ -149,7 +152,7 @@ export class RelayOrder {
         ),
         decayStartTime: decayStartTime.toNumber(),
         decayEndTime: decayEndTime.toNumber(),
-        actions: actions
+        actions: actions,
       },
       chainId,
       permit2
@@ -178,7 +181,7 @@ export class RelayOrder {
         startAmount: input.startAmount.toString(),
         maxAmount: input.maxAmount.toString(),
         recipient: input.recipient,
-      }))
+      })),
     };
   }
 

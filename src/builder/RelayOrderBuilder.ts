@@ -122,13 +122,11 @@ export class RelayOrderBuilder {
     invariant(this.info.inputs.length !== 0, "inputs must be non-empty");
 
     invariant(
-      !this.info.deadline ||
-        this.info.decayStartTime <= this.info.deadline,
+      !this.info.deadline || this.info.decayStartTime <= this.info.deadline,
       `input decayStartTime must be before or same as deadline: ${this.info.decayStartTime}`
     );
     invariant(
-      !this.info.deadline ||
-        this.info.decayEndTime <= this.info.deadline,
+      !this.info.deadline || this.info.decayEndTime <= this.info.deadline,
       `decayEndTime must be before or same as deadline: ${this.info.decayEndTime}`
     );
 
