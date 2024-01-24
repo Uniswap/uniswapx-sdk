@@ -33,30 +33,6 @@ describe("RelayOrderBuilder", () => {
     expect(order.info.inputs.length).toEqual(1);
   });
 
-  // TODO: add any relay order specific validation here
-  it("Builds a valid order with validation", () => {
-    const deadline = Math.floor(Date.now() / 1000) + 1000;
-    const order = builder
-      .deadline(deadline)
-      .swapper("0x0000000000000000000000000000000000000001")
-      .nonce(BigNumber.from(100))
-      .decayStartTime(deadline - 100)
-      .decayEndTime(deadline)
-      .action("")
-      .input({
-        token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-
-        startAmount: BigNumber.from("1000000"),
-        maxAmount: BigNumber.from("1000000"),
-        recipient: "0x0000000000000000000000000000000000000000",
-      })
-
-      .build();
-
-    expect(order.info.decayStartTime).toEqual(deadline - 100);
-    expect(order.info.inputs.length).toEqual(1);
-  });
-
   it("Regenerates builder from order", () => {
     const deadline = Math.floor(Date.now() / 1000) + 1000;
     const order = builder

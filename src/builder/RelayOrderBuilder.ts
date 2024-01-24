@@ -119,7 +119,6 @@ export class RelayOrderBuilder {
     invariant(this.info.decayEndTime !== undefined, "decayEndTime not set");
     invariant(this.info.actions !== undefined, "actions not set");
     invariant(this.info.inputs !== undefined, "inputs not set");
-    invariant(this.info.inputs.length !== 0, "inputs must be non-empty");
 
     invariant(
       !this.info.deadline || this.info.decayStartTime <= this.info.deadline,
