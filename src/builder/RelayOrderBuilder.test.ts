@@ -122,7 +122,7 @@ describe("RelayOrderBuilder", () => {
       .action("action 2")
       .build();
     expect(order.info.actions).toStrictEqual(["action 1", "action 2"]);
-  })
+  });
 
   it("startAmount >= maxAmount", () => {
     const deadline = Math.floor(Date.now() / 1000) + 1000;

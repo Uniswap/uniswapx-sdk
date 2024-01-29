@@ -27,33 +27,34 @@ export enum KNOWN_EVENT_SIGNATURES {
 export enum OrderType {
   Dutch = "Dutch",
   Relay = "Relay",
+  Limit = "Limit",
 }
 
-type Reactors = {
+type Reactors = Partial<{
   [key in OrderType]: string;
-};
+}>;
 
 type ReactorMapping = { readonly [key: number]: Reactors };
 type ReverseReactorMapping = {
-  [key: string]: { chainId: number; orderType: OrderType };
+  [key: string]: { orderType: OrderType };
 };
 
 export const REACTOR_ADDRESS_MAPPING: ReactorMapping = {
   1: {
     [OrderType.Dutch]: "0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4",
-    [OrderType.Relay]: "0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4",
+    [OrderType.Relay]: "0x0000000000000000000000000000000000000000",
   },
   5: {
     [OrderType.Dutch]: "0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4",
-    [OrderType.Relay]: "0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4",
+    [OrderType.Relay]: "0x0000000000000000000000000000000000000000",
   },
   137: {
     [OrderType.Dutch]: "0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4",
-    [OrderType.Relay]: "0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4",
+    [OrderType.Relay]: "0x0000000000000000000000000000000000000000",
   },
   12341234: {
     [OrderType.Dutch]: "0xbD7F9D0239f81C94b728d827a87b9864972661eC",
-    [OrderType.Relay]: "0x6000da47483062A0D734Ba3dc7576Ce6A0B645C4",
+    [OrderType.Relay]: "0x0000000000000000000000000000000000000000",
   },
 };
 
@@ -62,11 +63,10 @@ export const MULTICALL_ADDRESS = "0xcA11bde05977b3631167028862bE2a173976CA11";
 
 export const REVERSE_REACTOR_MAPPING: ReverseReactorMapping = Object.entries(
   REACTOR_ADDRESS_MAPPING
-).reduce((acc: ReverseReactorMapping, [chainId, orderTypes]) => {
+).reduce((acc: ReverseReactorMapping, [_, orderTypes]) => {
   for (const [orderType, reactorAddress] of Object.entries(orderTypes)) {
     // lowercase for consistency when parsing orders
     acc[reactorAddress.toLowerCase()] = {
-      chainId: parseInt(chainId),
       orderType: OrderType[orderType as keyof typeof OrderType],
     };
   }

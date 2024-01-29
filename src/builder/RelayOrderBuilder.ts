@@ -36,14 +36,14 @@ export class RelayOrderBuilder {
     reactorAddress?: string,
     private permit2Address?: string
   ) {
+    const mappedReactorAddress = REACTOR_ADDRESS_MAPPING[chainId]
+      ? REACTOR_ADDRESS_MAPPING[chainId][OrderType.Relay]
+      : undefined;
+
     if (reactorAddress) {
       this.reactor(reactorAddress);
-    } else if (
-      REACTOR_ADDRESS_MAPPING[chainId] &&
-      REACTOR_ADDRESS_MAPPING[chainId][OrderType.Relay]
-    ) {
-      const reactorAddress = REACTOR_ADDRESS_MAPPING[chainId][OrderType.Relay];
-      this.reactor(reactorAddress);
+    } else if (mappedReactorAddress) {
+      this.reactor(mappedReactorAddress);
     } else {
       throw new MissingConfiguration("reactor", chainId.toString());
     }
