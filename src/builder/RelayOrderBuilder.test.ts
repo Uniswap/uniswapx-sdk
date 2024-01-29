@@ -104,6 +104,26 @@ describe("RelayOrderBuilder", () => {
     expect(regenerated.info.actions).toStrictEqual(["", "new action"]);
   });
 
+  it("allows for addition of multiple actions", () => {
+    const deadline = Math.floor(Date.now() / 1000) + 1000;
+    const order = builder
+      .deadline(deadline)
+      .swapper("0x0000000000000000000000000000000000000001")
+      .nonce(BigNumber.from(100))
+      .decayStartTime(deadline - 100)
+      .decayEndTime(deadline)
+      .input({
+        token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        startAmount: BigNumber.from("1000000"),
+        maxAmount: BigNumber.from("1000000"),
+        recipient: "0x0000000000000000000000000000000000000000",
+      })
+      .action("action 1")
+      .action("action 2")
+      .build();
+    expect(order.info.actions).toStrictEqual(["action 1", "action 2"]);
+  })
+
   it("startAmount >= maxAmount", () => {
     const deadline = Math.floor(Date.now() / 1000) + 1000;
     expect(() =>
