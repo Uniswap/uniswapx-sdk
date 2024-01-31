@@ -1,6 +1,6 @@
 import { OrderType, REVERSE_REACTOR_MAPPING } from "../constants";
 import { MissingConfiguration } from "../errors";
-import { DutchOrder, Order, RelayOrder } from "../order";
+import { DutchOrder, Order, OrderInfo, RelayOrder, RelayOrderInfo } from "../order";
 
 import { stripHexPrefix } from ".";
 
@@ -50,7 +50,7 @@ export function getOrderTypeFromEncoded(
  * Determines the OrderType from an Order object
  * @return OrderType
  */
-export function getOrderType(order: Order | RelayOrder): OrderType {
+export function getOrderType(order: Order<OrderInfo | RelayOrderInfo>): OrderType {
   const { orderType } =
     REVERSE_REACTOR_MAPPING[order.info.reactor.toLowerCase()];
 

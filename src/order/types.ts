@@ -1,13 +1,11 @@
 import { SignatureLike } from "@ethersproject/bytes";
-import { PermitTransferFromData } from "@uniswap/permit2-sdk";
+import { PermitTransferFromData, PermitBatchTransferFromData } from "@uniswap/permit2-sdk";
 import { BigNumber } from "ethers";
 
 import { ResolvedOrder } from "../utils/OrderQuoter";
 
-import { CustomOrderValidation, parseValidation } from "./validation";
-
-export abstract class Order {
-  abstract info: OrderInfo;
+export abstract class Order<T = OrderInfo> {
+  abstract info: T;
 
   // expose the chainid
   abstract chainId: number;
@@ -33,7 +31,7 @@ export abstract class Order {
    * Returns the data for generating the maker EIP-712 permit signature
    * @return The data for generating the maker EIP-712 permit signature
    */
-  abstract permitData(): PermitTransferFromData;
+  abstract permitData(): PermitTransferFromData | PermitBatchTransferFromData;
 
   /**
    * Returns the order hash
@@ -46,14 +44,6 @@ export abstract class Order {
    * @return The resolved order
    */
   abstract resolve(options: OrderResolutionOptions): ResolvedOrder;
-
-  /**
-   * Returns the parsed validation
-   * @return The parsed validation data for the order
-   */
-  get validation(): CustomOrderValidation {
-    return parseValidation(this.info);
-  }
 }
 
 export abstract class V2Order extends Order {
@@ -81,7 +71,7 @@ export abstract class V2Order extends Order {
    * @return Returns the full order hash over (orderHash || cosignerData)
    */
   abstract hashFullOrder(): string;
-}
+}  
 
 export type TokenAmount = {
   readonly token: string;

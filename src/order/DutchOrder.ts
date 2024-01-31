@@ -22,6 +22,7 @@ import {
   OrderInfo,
   OrderResolutionOptions,
 } from "./types";
+import { CustomOrderValidation, parseValidation } from "./validation";
 
 export function id(text: string): string {
   return keccak256(toUtf8Bytes(text));
@@ -361,6 +362,14 @@ export class DutchOrder extends Order {
         };
       }),
     };
+  }
+
+  /**
+   * Returns the parsed validation
+   * @return The parsed validation data for the order
+   */
+  get validation(): CustomOrderValidation {
+      return parseValidation(this.info);
   }
 
   private toPermit(): PermitTransferFrom {

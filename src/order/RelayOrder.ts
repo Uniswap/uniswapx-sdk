@@ -12,7 +12,7 @@ import { MissingConfiguration } from "../errors";
 import { ResolvedRelayOrder } from "../utils/OrderQuoter";
 import { getDecayedAmount } from "../utils/dutchDecay";
 
-import { OrderInfo, OrderResolutionOptions } from "./types";
+import { Order, OrderInfo, OrderResolutionOptions } from "./types";
 
 export type RelayInput = {
   readonly token: string;
@@ -78,7 +78,7 @@ const RELAY_ORDER_ABI = [
     ")",
 ];
 
-export class RelayOrder {
+export class RelayOrder extends Order<RelayOrderInfo> {
   public permit2Address: string;
 
   constructor(
@@ -86,6 +86,7 @@ export class RelayOrder {
     public readonly chainId: number,
     readonly _permit2Address?: string
   ) {
+    super();
     if (_permit2Address) {
       this.permit2Address = _permit2Address;
     } else if (PERMIT2_MAPPING[chainId]) {
