@@ -425,8 +425,8 @@ export class V2DutchOrder extends V2Order {
    * Returns the parsed validation
    * @return The parsed validation data for the order
    */
-    get validation(): CustomOrderValidation {
-      return parseValidation(this.info);
+  get validation(): CustomOrderValidation {
+    return parseValidation(this.info);
   }
 
   private toPermit(): PermitTransferFrom {

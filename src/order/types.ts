@@ -1,5 +1,8 @@
 import { SignatureLike } from "@ethersproject/bytes";
-import { PermitTransferFromData, PermitBatchTransferFromData } from "@uniswap/permit2-sdk";
+import {
+  PermitBatchTransferFromData,
+  PermitTransferFromData,
+} from "@uniswap/permit2-sdk";
 import { BigNumber } from "ethers";
 
 import { ResolvedOrder } from "../utils/OrderQuoter";
@@ -71,7 +74,7 @@ export abstract class V2Order extends Order {
    * @return Returns the full order hash over (orderHash || cosignerData)
    */
   abstract hashFullOrder(): string;
-}  
+}
 
 export type TokenAmount = {
   readonly token: string;

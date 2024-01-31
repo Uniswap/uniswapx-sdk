@@ -369,7 +369,7 @@ export class DutchOrder extends Order {
    * @return The parsed validation data for the order
    */
   get validation(): CustomOrderValidation {
-      return parseValidation(this.info);
+    return parseValidation(this.info);
   }
 
   private toPermit(): PermitTransferFrom {
