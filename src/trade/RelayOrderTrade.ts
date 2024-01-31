@@ -6,7 +6,7 @@ import { areCurrenciesEqual } from "./utils";
 import { RELAY_SENTINEL_RECIPIENT } from "../constants";
 
 /// A high level Trade object that representes a Relay order
-/// Opinionated for our use case
+/// It requires an output amount to be provided in order to calculate execution price
 export class RelayOrderTrade<
   TInput extends Currency,
   TOutput extends Currency,
@@ -93,14 +93,13 @@ export class RelayOrderTrade<
     if (this.order.info.inputs.length === 0) {
       throw new Error("there must be at least one input token");
     }
-    const input = this.order.info.inputs[0];
-    const feeInput = this.order.info.inputs.find((input) =>
+    const input = this.order.info.inputs.find((input) =>
       input.recipient === RELAY_SENTINEL_RECIPIENT
     )
 
     // The order does not contain a tip for the filler
-    if(!feeInput) {
-      this._firstFeeInputStartEndAmount = undefined
+    if(!input) {
+      throw new Error("no fee input found")
     };
     
     // assume single chain ids across all outputs for now
@@ -141,15 +140,14 @@ export class RelayOrderTrade<
     if (this.order.info.inputs.length === 0) {
       throw new Error("there must be at least one input token");
     }
-    const input = this.order.info.inputs[0];
 
     // Not going to filler (denoted by sentinel address)
-    const swapInput = this.order.info.inputs.find((input) =>
+    const input = this.order.info.inputs.find((input) =>
       input.recipient !== RELAY_SENTINEL_RECIPIENT
     )
 
-    if(!swapInput) {
-      this._firstNonFeeInputStartEndAmount = undefined
+    if(!input) {
+      throw new Error("no non-fee input found");
     };
     
     // assume single chain ids across all outputs for now
@@ -159,7 +157,7 @@ export class RelayOrderTrade<
 
     if (!currencyIn) {
       throw new Error(
-        "currency output from order must exist in currenciesOut list"
+        "currency input from order must exist in currenciesIn list"
       );
     }
 
