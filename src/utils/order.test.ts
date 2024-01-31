@@ -1,8 +1,8 @@
 import { BigNumber } from "ethers";
 
-import { DutchOrderBuilder } from "../builder";
+import { DutchOrderBuilder, RelayOrderBuilder } from "../builder";
 import { OrderType } from "../constants";
-import { DutchOrder } from "../order";
+import { DutchOrder, RelayOrder } from "../order";
 
 import { getOrderType, getOrderTypeFromEncoded, parseOrder } from "./order";
 
@@ -10,6 +10,7 @@ describe("order utils", () => {
   let dutchOrder: DutchOrder;
   let dutchOrderExactOut: DutchOrder;
   let limitOrder: DutchOrder;
+  let relayOrder: RelayOrder;
   let chainId: number;
 
   beforeEach(() => {
@@ -69,6 +70,20 @@ describe("order utils", () => {
         recipient: "0x0000000000000000000000000000000000000000",
       })
       .build();
+    const relayBuilder = new RelayOrderBuilder(chainId);
+    relayOrder = relayBuilder
+      .deadline(deadline)
+      .decayEndTime(deadline)
+      .decayStartTime(deadline - 100)
+      .swapper("0x0000000000000000000000000000000000000001")
+      .nonce(BigNumber.from(100))
+      .input({
+        token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        startAmount: BigNumber.from("1000000"),
+        maxAmount: BigNumber.from("1000000"),
+        recipient: "0x0000000000000000000000000000000000000000"
+      })
+      .build();
   });
 
   describe("parseOrder", () => {
@@ -87,6 +102,31 @@ describe("order utils", () => {
       const encodedOrder = dutchOrder.serialize();
       expect(parseOrder(encodedOrder, chainId)).toEqual(dutchOrder);
     });
+
+    // TODO: fix after quoter is done
+    relayOrder;
+
+    // it('parses RelayOrder', () => {
+    //   const encodedOrder = relayOrder.serialize();
+    //   expect(parseOrder(encodedOrder, chainId)).toEqual(relayOrder);
+    // })
+
+    // it('parses RelayOrder with actions', () => {
+    //   relayOrder.info.actions.push("0x0000000000000000000000000000000000000123");
+    //   const encodedOrder = relayOrder.serialize();
+    //   expect(parseOrder(encodedOrder, chainId)).toEqual(relayOrder);
+    // })
+
+    // it('parses RelayOrder with multiple inputs', () => {
+    //   relayOrder.info.inputs.push({
+    //     token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    //     startAmount: BigNumber.from("100"),
+    //     maxAmount: BigNumber.from("100"),
+    //     recipient: "0x0000000000000000000000000000000000000001"
+    //   });
+    //   const encodedOrder = relayOrder.serialize();
+    //   expect(parseOrder(encodedOrder, chainId)).toEqual(relayOrder);
+    // })
   });
 
   describe("getOrderType", () => {
@@ -99,6 +139,9 @@ describe("order utils", () => {
     it("parses LimitOrder type", () => {
       expect(getOrderType(limitOrder)).toEqual(OrderType.Limit);
     });
+    // it("parses RelayOrder type", () => {
+    //   expect(getOrderType(relayOrder)).toEqual(OrderType.Relay);
+    // });
   });
 
   describe("getOrderTypeFromEncoded", () => {
@@ -117,5 +160,10 @@ describe("order utils", () => {
         OrderType.Limit
       );
     });
+    // it("parses RelayOrder type", () => {
+    //   expect(getOrderTypeFromEncoded(relayOrder.serialize(), chainId)).toEqual(
+    //     OrderType.Relay
+    //   );
+    // });
   });
 });
