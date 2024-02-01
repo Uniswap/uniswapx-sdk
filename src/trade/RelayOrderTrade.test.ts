@@ -1,4 +1,4 @@
-import { Currency, Token, TradeType, CurrencyAmount } from "@uniswap/sdk-core";
+import { Currency, CurrencyAmount, Token, TradeType } from "@uniswap/sdk-core";
 import { BigNumber, ethers } from "ethers";
 
 import { RelayOrderInfo } from "../order";
@@ -24,15 +24,12 @@ describe("RelayOrderTrade", () => {
   const NON_FEE_INPUT_AMOUNT = BigNumber.from(1000);
   const NON_FEE_MAXIMUM_INPUT_AMOUNT = BigNumber.from(2000);
 
+  // 1000 DAI
   const MOCK_SWAP_OUTPUT_AMOUNT = CurrencyAmount.fromRawAmount(
     DAI,
-    "1000000000000000000"
-  )
-  const OUTPUT_AMOUNT = BigNumber.from("1000000000000000000");
-  // const MOCK_SWAP_MINIMMUM_OUTPUT_AMOUNT = CurrencyAmount.fromRawAmount(
-  //   DAI,
-  //   "900000000000000000"
-  // )
+    "1000000000000000000000"
+  );
+  const OUTPUT_AMOUNT = BigNumber.from("1000000000000000000000");
 
   const getOrderInfo = (data: Partial<RelayOrderInfo>): RelayOrderInfo => {
     const decayStartTime = Math.floor(new Date().getTime() / 1000);
@@ -95,5 +92,66 @@ describe("RelayOrderTrade", () => {
     expect(trade.maximumAmountInFee.quotient.toString()).toEqual(
       FEE_MAXIMUM_INPUT_AMOUNT.toString()
     );
+  });
+
+  describe("can aggregate inputs", () => {
+    it("returns the correct execution price", () => {
+      // sum of inputs: 1000 + 100 = 1100
+      // outputs: 1000
+      // expected execution price: 1000 / 1100 = 0.909090909090909090
+      expect(trade.executionPrice.quotient.toString()).toEqual(
+        "909090909090909090"
+      );
+    });
+
+    it("returns the correct worst execution price", () => {
+      // sum of max input amounts: 2000 + 200 = 2200
+      // outputs: 1000
+      // expected execution price: 1000 / 2200 = 0.454545454545454545
+      expect(trade.worstExecutionPrice().quotient.toString()).toEqual(
+        "454545454545454545"
+      );
+    });
+  });
+
+  describe("does not return execution price when cannot aggregate inputs", () => {
+    const orderInfo = getOrderInfo({
+      inputs: [
+        {
+          token: USDC.address,
+          startAmount: FEE_INPUT_AMOUNT,
+          maxAmount: FEE_MAXIMUM_INPUT_AMOUNT,
+          recipient: ethers.constants.AddressZero,
+        },
+        {
+          token: DAI.address,
+          startAmount: NON_FEE_INPUT_AMOUNT,
+          maxAmount: NON_FEE_MAXIMUM_INPUT_AMOUNT,
+          recipient: "0x0000000000000000000000000000000000000001",
+        },
+      ],
+    });
+    const trade = new RelayOrderTrade<Currency, Currency, TradeType>({
+      currenciesIn: [USDC, DAI],
+      outputAmount: MOCK_SWAP_OUTPUT_AMOUNT,
+      orderInfo,
+      tradeType: TradeType.EXACT_INPUT,
+    });
+
+    it("cannot aggregate inputs", () => {
+      expect(trade.canAggregateInputs).toEqual(false);
+    });
+
+    it("throws error when getting execution price", () => {
+      expect(() => trade.executionPrice).toThrowError(
+        "cannot aggregate inputs"
+      );
+    });
+
+    it("throws error when getting worst execution price", () => {
+      expect(() => trade.worstExecutionPrice()).toThrowError(
+        "cannot aggregate inputs"
+      );
+    });
   });
 });

@@ -1,9 +1,9 @@
 import { Currency, CurrencyAmount, Price, TradeType } from "@uniswap/sdk-core";
 
+import { RELAY_SENTINEL_RECIPIENT } from "../constants";
 import { RelayOrder, RelayOrderInfo } from "../order";
 
 import { areCurrenciesEqual } from "./utils";
-import { RELAY_SENTINEL_RECIPIENT } from "../constants";
 
 /// A high level Trade object that representes a Relay order
 /// It requires an output amount to be provided in order to calculate execution price
@@ -74,7 +74,7 @@ export class RelayOrderTrade<
         endAmount: CurrencyAmount<TInput>;
       }
     | undefined;
-  
+
   private _firstNonFeeInputStartEndAmount:
     | {
         startAmount: CurrencyAmount<TInput>;
@@ -93,15 +93,15 @@ export class RelayOrderTrade<
     if (this.order.info.inputs.length === 0) {
       throw new Error("there must be at least one input token");
     }
-    const input = this.order.info.inputs.find((input) =>
-      input.recipient === RELAY_SENTINEL_RECIPIENT
-    )
+    const input = this.order.info.inputs.find(
+      (input) => input.recipient === RELAY_SENTINEL_RECIPIENT
+    );
 
     // The order does not contain a tip for the filler
-    if(!input) {
-      throw new Error("no fee input found")
-    };
-    
+    if (!input) {
+      throw new Error("no fee input found");
+    }
+
     // assume single chain ids across all outputs for now
     const currencyIn = this._currenciesIn.find((currency) =>
       areCurrenciesEqual(currency, input.token, currency.chainId)
@@ -142,14 +142,14 @@ export class RelayOrderTrade<
     }
 
     // Not going to filler (denoted by sentinel address)
-    const input = this.order.info.inputs.find((input) =>
-      input.recipient !== RELAY_SENTINEL_RECIPIENT
-    )
+    const input = this.order.info.inputs.find(
+      (input) => input.recipient !== RELAY_SENTINEL_RECIPIENT
+    );
 
-    if(!input) {
+    if (!input) {
       throw new Error("no non-fee input found");
-    };
-    
+    }
+
     // assume single chain ids across all outputs for now
     const currencyIn = this._currenciesIn.find((currency) =>
       areCurrenciesEqual(currency, input.token, currency.chainId)
@@ -222,8 +222,8 @@ export class RelayOrderTrade<
    * @dev this is only valid if all of the inputs are the same currency
    */
   public get executionPrice(): Price<TInput, TOutput> {
-    if(!this.canAggregateInputs) {
-      throw new Error("cannot aggregate inputs for executionPrice")
+    if (!this.canAggregateInputs) {
+      throw new Error("cannot aggregate inputs for executionPrice");
     }
     return (
       this._executionPrice ??
