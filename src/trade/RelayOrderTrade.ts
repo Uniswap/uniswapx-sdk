@@ -8,7 +8,6 @@ import { areCurrenciesEqual } from "./utils";
 /// A high level Trade object that representes a Relay order
 /// It requires an output amount to be provided in order to calculate execution price
 /// @dev all inputs must be the same currency to calculate execution price
-/// @dev set output amount to minAmountOut to get accurate worst execution price
 export class RelayOrderTrade<
   TInput extends Currency,
   TOutput extends Currency,
