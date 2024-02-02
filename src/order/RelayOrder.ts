@@ -290,10 +290,10 @@ export class RelayOrder extends Order<RelayOrderInfo> {
     return {
       reactor: this.info.reactor,
       swapper: this.info.swapper,
-      decayStartTime: this.info.decayStartTime,
-      decayEndTime: this.info.decayEndTime,
       startAmounts: this.info.inputs.map((input) => input.startAmount),
       recipients: this.info.inputs.map((input) => input.recipient),
+      decayStartTime: this.info.decayStartTime,
+      decayEndTime: this.info.decayEndTime,
       actions: this.info.actions,
     };
   }
