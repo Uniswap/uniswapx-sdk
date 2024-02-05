@@ -4,10 +4,11 @@
 import type {
   BaseContract,
   BigNumber,
+  BigNumberish,
   BytesLike,
   CallOverrides,
   ContractTransaction,
-  PayableOverrides,
+  Overrides,
   PopulatedTransaction,
   Signer,
   utils,
@@ -36,10 +37,23 @@ export type SignedOrderStructOutput = [string, string] & {
   sig: string;
 };
 
+export declare namespace ISignatureTransfer {
+  export type SignatureTransferDetailsStruct = {
+    to: PromiseOrValue<string>;
+    requestedAmount: PromiseOrValue<BigNumberish>;
+  };
+
+  export type SignatureTransferDetailsStructOutput = [string, BigNumber] & {
+    to: string;
+    requestedAmount: BigNumber;
+  };
+}
+
 export interface RelayOrderReactorInterface extends utils.Interface {
   functions: {
-    "execute((bytes,bytes))": FunctionFragment;
-    "executeBatch((bytes,bytes)[])": FunctionFragment;
+    "execute((bytes,bytes),address)": FunctionFragment;
+    "multicall(bytes[])": FunctionFragment;
+    "permit(address,bytes)": FunctionFragment;
     "permit2()": FunctionFragment;
     "universalRouter()": FunctionFragment;
   };
@@ -47,18 +61,23 @@ export interface RelayOrderReactorInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "execute"
-      | "executeBatch"
+      | "multicall"
+      | "permit"
       | "permit2"
       | "universalRouter"
   ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "execute",
-    values: [SignedOrderStruct]
+    values: [SignedOrderStruct, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "executeBatch",
-    values: [SignedOrderStruct[]]
+    functionFragment: "multicall",
+    values: [PromiseOrValue<BytesLike>[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "permit",
+    values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(functionFragment: "permit2", values?: undefined): string;
   encodeFunctionData(
@@ -67,10 +86,8 @@ export interface RelayOrderReactorInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "executeBatch",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "multicall", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "permit", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "permit2", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "universalRouter",
@@ -125,13 +142,20 @@ export interface RelayOrderReactor extends BaseContract {
 
   functions: {
     execute(
-      order: SignedOrderStruct,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+      signedOrder: SignedOrderStruct,
+      feeRecipient: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    executeBatch(
-      orders: SignedOrderStruct[],
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    multicall(
+      data: PromiseOrValue<BytesLike>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    permit(
+      token: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     permit2(overrides?: CallOverrides): Promise<[string]>;
@@ -140,13 +164,20 @@ export interface RelayOrderReactor extends BaseContract {
   };
 
   execute(
-    order: SignedOrderStruct,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    signedOrder: SignedOrderStruct,
+    feeRecipient: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  executeBatch(
-    orders: SignedOrderStruct[],
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  multicall(
+    data: PromiseOrValue<BytesLike>[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  permit(
+    token: PromiseOrValue<string>,
+    data: PromiseOrValue<BytesLike>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   permit2(overrides?: CallOverrides): Promise<string>;
@@ -154,10 +185,20 @@ export interface RelayOrderReactor extends BaseContract {
   universalRouter(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
-    execute(order: SignedOrderStruct, overrides?: CallOverrides): Promise<void>;
+    execute(
+      signedOrder: SignedOrderStruct,
+      feeRecipient: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<ISignatureTransfer.SignatureTransferDetailsStructOutput[]>;
 
-    executeBatch(
-      orders: SignedOrderStruct[],
+    multicall(
+      data: PromiseOrValue<BytesLike>[],
+      overrides?: CallOverrides
+    ): Promise<string[]>;
+
+    permit(
+      token: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -183,13 +224,20 @@ export interface RelayOrderReactor extends BaseContract {
 
   estimateGas: {
     execute(
-      order: SignedOrderStruct,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+      signedOrder: SignedOrderStruct,
+      feeRecipient: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    executeBatch(
-      orders: SignedOrderStruct[],
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    multicall(
+      data: PromiseOrValue<BytesLike>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    permit(
+      token: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     permit2(overrides?: CallOverrides): Promise<BigNumber>;
@@ -199,13 +247,20 @@ export interface RelayOrderReactor extends BaseContract {
 
   populateTransaction: {
     execute(
-      order: SignedOrderStruct,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+      signedOrder: SignedOrderStruct,
+      feeRecipient: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    executeBatch(
-      orders: SignedOrderStruct[],
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    multicall(
+      data: PromiseOrValue<BytesLike>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    permit(
+      token: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     permit2(overrides?: CallOverrides): Promise<PopulatedTransaction>;

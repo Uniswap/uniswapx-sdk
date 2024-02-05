@@ -146,7 +146,7 @@ describe("RelayOrderTrade", () => {
         "1000000000000000000"
       );
     });
-  
+
     it("returns the correct worst execution price", () => {
       // sum of max non fee input amounts: 2000 = 2000
       // outputs: 1000
