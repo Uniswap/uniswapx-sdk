@@ -94,27 +94,27 @@ describe("RelayOrderTrade", () => {
     );
   });
 
-  describe("can aggregate inputs", () => {
+  describe("inputs are the same token", () => {
     it("returns the correct execution price", () => {
-      // sum of inputs: 1000 + 100 = 1100
+      // non fee inputs: 1000 = 1000
       // outputs: 1000
-      // expected execution price: 1000 / 1100 = 0.909090909090909090
+      // expected execution price: 1000 / 1000 = 1
       expect(trade.executionPrice.quotient.toString()).toEqual(
-        "909090909090909090"
+        "1000000000000000000"
       );
     });
 
     it("returns the correct worst execution price", () => {
-      // sum of max input amounts: 2000 + 200 = 2200
+      // sum of max non fee input amounts: 2000 = 2000
       // outputs: 1000
-      // expected execution price: 1000 / 2200 = 0.454545454545454545
+      // expected execution price: 1000 / 2000 = 0.5
       expect(trade.worstExecutionPrice().quotient.toString()).toEqual(
-        "454545454545454545"
+        "500000000000000000"
       );
     });
   });
 
-  describe("does not return execution price when cannot aggregate inputs", () => {
+  describe("inputs are different tokens", () => {
     const orderInfo = getOrderInfo({
       inputs: [
         {
@@ -138,19 +138,21 @@ describe("RelayOrderTrade", () => {
       tradeType: TradeType.EXACT_INPUT,
     });
 
-    it("cannot aggregate inputs", () => {
-      expect(trade.canAggregateInputs).toEqual(false);
-    });
-
-    it("throws error when getting execution price", () => {
-      expect(() => trade.executionPrice).toThrowError(
-        "cannot aggregate inputs"
+    it("returns the correct execution price", () => {
+      // non fee inputs: 1000 = 1000
+      // outputs: 1000
+      // expected execution price: 1000 / 1000 = 1
+      expect(trade.executionPrice.quotient.toString()).toEqual(
+        "1000000000000000000"
       );
     });
-
-    it("throws error when getting worst execution price", () => {
-      expect(() => trade.worstExecutionPrice()).toThrowError(
-        "cannot aggregate inputs"
+  
+    it("returns the correct worst execution price", () => {
+      // sum of max non fee input amounts: 2000 = 2000
+      // outputs: 1000
+      // expected execution price: 1000 / 2000 = 0.5
+      expect(trade.worstExecutionPrice().quotient.toString()).toEqual(
+        "500000000000000000"
       );
     });
   });

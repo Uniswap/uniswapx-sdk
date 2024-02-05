@@ -7,7 +7,7 @@ import { areCurrenciesEqual } from "./utils";
 
 /// A high level Trade object that representes a Relay order
 /// It requires an output amount to be provided in order to calculate execution price
-/// @dev all inputs must be the same currency to calculate execution price
+/// @dev the execution price does not take into account gas fees
 export class RelayOrderTrade<
   TInput extends Currency,
   TOutput extends Currency,
@@ -129,8 +129,7 @@ export class RelayOrderTrade<
     return startEndAmounts;
   }
 
-  // This is usually the input sent to UR
-  // Not guaranteed, so the recipipent MUST be checked
+  // This is the first non-fee input, usually used for an encoded swap but not guaranteed so the recipipent MUST be checked
   private getFirstNonFeeInputStartEndAmount(): {
     startAmount: CurrencyAmount<TInput>;
     endAmount: CurrencyAmount<TInput>;
@@ -220,18 +219,15 @@ export class RelayOrderTrade<
 
   /**
    * The price expressed in terms of output amount/input amount.
-   * @dev this is only valid if all of the inputs are the same currency
+   * @dev this only takes into account non fee inputs (does not include gas)
    */
   public get executionPrice(): Price<TInput, TOutput> {
-    if (!this.canAggregateInputs) {
-      throw new Error("cannot aggregate inputs for executionPrice");
-    }
     return (
       this._executionPrice ??
       (this._executionPrice = new Price(
-        this.aggregateInputAmounts().currency,
+        this.amountIn.currency,
         this.outputAmount.currency,
-        this.aggregateInputAmounts().quotient,
+        this.amountIn.quotient,
         this.outputAmount.quotient
       ))
     );
@@ -239,13 +235,14 @@ export class RelayOrderTrade<
 
   /**
    * Return the execution price after accounting for slippage tolerance
+   * @dev this only takes into account non fee inputs (does not include gas)
    * @returns The execution price
    */
   public worstExecutionPrice(): Price<TInput, TOutput> {
     return new Price(
-      this.aggregateInputAmounts().currency,
+      this.maximumAmountIn.currency,
       this.outputAmount.currency,
-      this.aggregateMaximumAmountIn().quotient,
+      this.maximumAmountIn.quotient,
       this.outputAmount.quotient
     );
   }
