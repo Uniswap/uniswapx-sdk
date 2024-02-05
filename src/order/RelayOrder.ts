@@ -54,7 +54,7 @@ type WitnessInfo = {
   actions: string[];
 };
 
-const RELAY_ORDER_TYPES = {
+const RELAY_WITNESS_TYPES = {
   RelayOrder: [
     { name: "reactor", type: "address" },
     { name: "swapper", type: "address" },
@@ -246,7 +246,7 @@ export class RelayOrder extends Order<RelayOrderInfo> {
    */
   hash(): string {
     return ethers.utils._TypedDataEncoder
-      .from(RELAY_ORDER_TYPES)
+      .from(RELAY_WITNESS_TYPES)
       .hash(this.witnessInfo());
   }
 
@@ -302,7 +302,7 @@ export class RelayOrder extends Order<RelayOrderInfo> {
     return {
       witness: this.witnessInfo(),
       witnessTypeName: "RelayOrder",
-      witnessType: RELAY_ORDER_TYPES,
+      witnessType: RELAY_WITNESS_TYPES,
     };
   }
 }
