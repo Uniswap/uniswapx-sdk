@@ -37,7 +37,6 @@ export interface ResolvedDutchOrder {
 }
 
 export interface ResolvedRelayOrder {
-  actions: string[];
   inputs: ResolvedRelayInput[];
 }
 

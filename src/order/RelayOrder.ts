@@ -255,7 +255,6 @@ export class RelayOrder extends Order<RelayOrderInfo> {
    */
   resolve(options: OrderResolutionOptions): ResolvedRelayOrder {
     return {
-      actions: this.info.actions,
       inputs: this.info.inputs.map((input) => {
         return {
           token: input.token,
