@@ -8,7 +8,7 @@ import {
   OrderQuoter as OrderQuoterContract,
 } from "../contracts";
 import { MissingConfiguration } from "../errors";
-import { Order, ResolvedRelayInput, TokenAmount } from "../order";
+import { UniswapXOrder, ResolvedRelayInput, TokenAmount } from "../order";
 import { parseExclusiveFillerData, ValidationType } from "../order/validation";
 
 import { NonceManager } from "./NonceManager";
@@ -29,7 +29,7 @@ export enum OrderValidation {
   OK,
 }
 
-export type ResolvedOrder = ResolvedDutchOrder | ResolvedRelayOrder;
+export type ResolvedOrder = ResolvedDutchOrder;
 
 export interface ResolvedDutchOrder {
   input: TokenAmount;
@@ -75,7 +75,7 @@ const KNOWN_ERRORS: { [key: string]: OrderValidation } = {
 };
 
 export interface SignedOrder {
-  order: Order;
+  order: UniswapXOrder;
   signature: string;
 }
 

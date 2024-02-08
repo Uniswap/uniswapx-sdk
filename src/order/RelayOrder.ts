@@ -12,7 +12,7 @@ import { MissingConfiguration } from "../errors";
 import { ResolvedRelayOrder } from "../utils/OrderQuoter";
 import { getDecayedAmount } from "../utils/dutchDecay";
 
-import { Order, OrderInfo, OrderResolutionOptions } from "./types";
+import { OrderInfo, Order, OrderResolutionOptions } from "./types";
 
 export type RelayInput = {
   readonly token: string;
@@ -78,7 +78,7 @@ const RELAY_ORDER_ABI = [
     ")",
 ];
 
-export class RelayOrder extends Order<RelayOrderInfo> {
+export class RelayOrder implements Order {
   public permit2Address: string;
 
   constructor(
@@ -86,7 +86,6 @@ export class RelayOrder extends Order<RelayOrderInfo> {
     public readonly chainId: number,
     readonly _permit2Address?: string
   ) {
-    super();
     if (_permit2Address) {
       this.permit2Address = _permit2Address;
     } else if (PERMIT2_MAPPING[chainId]) {
@@ -160,9 +159,6 @@ export class RelayOrder extends Order<RelayOrderInfo> {
     );
   }
 
-  /**
-   * @inheritdoc order
-   */
   toJSON(): RelayOrderInfoJSON & {
     permit2Address: string;
     chainId: number;
@@ -186,9 +182,6 @@ export class RelayOrder extends Order<RelayOrderInfo> {
     };
   }
 
-  /**
-   * @inheritdoc order
-   */
   serialize(): string {
     const abiCoder = new ethers.utils.AbiCoder();
     return abiCoder.encode(RELAY_ORDER_ABI, [
@@ -230,7 +223,7 @@ export class RelayOrder extends Order<RelayOrderInfo> {
   }
 
   /**
-   * @inheritdoc Order
+   * @inheritdoc OrderInterface
    */
   permitData(): PermitBatchTransferFromData {
     return SignatureTransfer.getPermitData(
@@ -242,7 +235,7 @@ export class RelayOrder extends Order<RelayOrderInfo> {
   }
 
   /**
-   * @inheritdoc Order
+   * @inheritdoc OrderInterface
    */
   hash(): string {
     return ethers.utils._TypedDataEncoder
@@ -251,7 +244,8 @@ export class RelayOrder extends Order<RelayOrderInfo> {
   }
 
   /**
-   * @inheritdoc Order
+   * Returns the resolved order with the given options
+   * @return The resolved order
    */
   resolve(options: OrderResolutionOptions): ResolvedRelayOrder {
     return {

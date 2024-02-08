@@ -6,41 +6,54 @@ import {
 import { BigNumber } from "ethers";
 
 import { ResolvedOrder } from "../utils/OrderQuoter";
+import { CustomOrderValidation, parseValidation } from "./validation";
 
-export abstract class Order<T = OrderInfo> {
-  abstract info: T;
-
-  // expose the chainid
-  abstract chainId: number;
-
-  // TODO: maybe add generic order info getters, i.e.
-  // affectedTokens, validTimes, max amounts?
-  // not yet sure what is useful / generic here
-
+// General interface implemented by off chain orders
+export interface Order {
   /**
    * Returns the abi encoded order
    * @return The abi encoded serialized order which can be submitted on-chain
    */
-  abstract serialize(): string;
-
+  serialize(): string;
   /**
    * Recovers the given signature, returning the address which created it
    *  * @param signature The signature to recover
    *  * @returns address The address which created the signature
    */
-  abstract getSigner(signature: SignatureLike): string;
-
+  getSigner(signature: SignatureLike): string;
   /**
    * Returns the data for generating the maker EIP-712 permit signature
    * @return The data for generating the maker EIP-712 permit signature
    */
-  abstract permitData(): PermitTransferFromData | PermitBatchTransferFromData;
-
+  permitData(): PermitTransferFromData | PermitBatchTransferFromData;
   /**
    * Returns the order hash
    * @return The order hash which is used as a key on-chain
    */
+  hash(): string;
+}
+
+// Base class for a UniswapX order
+export abstract class UniswapXOrder implements Order {
+  abstract info: OrderInfo;
+
+  abstract chainId: number;
+
+  abstract serialize(): string;
+
+  abstract getSigner(signature: SignatureLike): string;
+
+  abstract permitData(): PermitTransferFromData;
+
   abstract hash(): string;
+
+  /**
+   * Returns the parsed validation
+   * @return The parsed validation data for the order
+   */
+  get validation(): CustomOrderValidation {
+    return parseValidation(this.info);
+  }
 
   /**
    * Returns the resolved order with the given options
@@ -49,7 +62,7 @@ export abstract class Order<T = OrderInfo> {
   abstract resolve(options: OrderResolutionOptions): ResolvedOrder;
 }
 
-export abstract class V2Order extends Order {
+export abstract class V2Order extends UniswapXOrder {
   /**
    * Recovers the signer (user) that signed over the inner order
    *  * @param signature The signature to recover

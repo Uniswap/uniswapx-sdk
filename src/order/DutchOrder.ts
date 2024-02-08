@@ -18,11 +18,10 @@ import {
   DutchInputJSON,
   DutchOutput,
   DutchOutputJSON,
-  Order,
+  UniswapXOrder,
   OrderInfo,
   OrderResolutionOptions,
 } from "./types";
-import { CustomOrderValidation, parseValidation } from "./validation";
 
 export function id(text: string): string {
   return keccak256(toUtf8Bytes(text));
@@ -103,7 +102,7 @@ const DUTCH_ORDER_ABI = [
     ")",
 ];
 
-export class DutchOrder extends Order {
+export class DutchOrder extends UniswapXOrder {
   public permit2Address: string;
 
   constructor(
@@ -208,9 +207,6 @@ export class DutchOrder extends Order {
     );
   }
 
-  /**
-   * @inheritdoc order
-   */
   toJSON(): DutchOrderInfoJSON & {
     permit2Address: string;
     chainId: number;
@@ -277,7 +273,7 @@ export class DutchOrder extends Order {
   }
 
   /**
-   * @inheritdoc Order
+   * @inheritDoc OrderInterface
    */
   getSigner(signature: SignatureLike): string {
     return ethers.utils.computeAddress(
@@ -294,7 +290,7 @@ export class DutchOrder extends Order {
   }
 
   /**
-   * @inheritdoc Order
+   * @inheritDoc OrderInterface
    */
   permitData(): PermitTransferFromData {
     return SignatureTransfer.getPermitData(
@@ -306,7 +302,7 @@ export class DutchOrder extends Order {
   }
 
   /**
-   * @inheritdoc Order
+   * @inheritDoc OrderInterface
    */
   hash(): string {
     return ethers.utils._TypedDataEncoder
@@ -362,14 +358,6 @@ export class DutchOrder extends Order {
         };
       }),
     };
-  }
-
-  /**
-   * Returns the parsed validation
-   * @return The parsed validation data for the order
-   */
-  get validation(): CustomOrderValidation {
-    return parseValidation(this.info);
   }
 
   private toPermit(): PermitTransferFrom {
