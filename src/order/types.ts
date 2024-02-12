@@ -6,6 +6,7 @@ import {
 import { BigNumber } from "ethers";
 
 import { ResolvedOrder } from "../utils/OrderQuoter";
+
 import { CustomOrderValidation, parseValidation } from "./validation";
 
 // General interface implemented by off chain orders

@@ -1,7 +1,7 @@
 import { BigNumber, ethers } from "ethers";
 import invariant from "tiny-invariant";
 
-import { UniswapXOrder, OrderInfo } from "../order";
+import { OrderInfo, UniswapXOrder } from "../order";
 import { ValidationInfo } from "../order/validation";
 
 /**

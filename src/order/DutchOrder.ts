@@ -18,9 +18,9 @@ import {
   DutchInputJSON,
   DutchOutput,
   DutchOutputJSON,
-  UniswapXOrder,
   OrderInfo,
   OrderResolutionOptions,
+  UniswapXOrder,
 } from "./types";
 
 export function id(text: string): string {

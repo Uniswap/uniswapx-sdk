@@ -8,7 +8,7 @@ import {
   OrderQuoter as OrderQuoterContract,
 } from "../contracts";
 import { MissingConfiguration } from "../errors";
-import { UniswapXOrder, ResolvedRelayInput, TokenAmount } from "../order";
+import { ResolvedRelayInput, TokenAmount, UniswapXOrder } from "../order";
 import { parseExclusiveFillerData, ValidationType } from "../order/validation";
 
 import { NonceManager } from "./NonceManager";
