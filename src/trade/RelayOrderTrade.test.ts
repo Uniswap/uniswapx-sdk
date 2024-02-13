@@ -21,8 +21,7 @@ const DAI = new Token(
 describe("RelayOrderTrade", () => {
   const FEE_START_AMOUNT = BigNumber.from(100);
   const FEE_END_AMOUNT = BigNumber.from(200);
-  const INPUT_START_AMOUNT = BigNumber.from(1000);
-  const INPUT_END_AMOUNT = BigNumber.from(2000);
+  const INPUT_AMOUNT = BigNumber.from(1000);
 
   // 1000 DAI
   const MOCK_SWAP_OUTPUT_AMOUNT = CurrencyAmount.fromRawAmount(
@@ -44,14 +43,14 @@ describe("RelayOrderTrade", () => {
         fee: {
           token: USDC.address,
           startAmount: FEE_START_AMOUNT,
-          maxAmount: FEE_END_AMOUNT,
+          endAmount: FEE_END_AMOUNT,
           feeStartTime,
           feeEndTime,
           recipient: ethers.constants.AddressZero,
         },
         input: {
           token: USDC.address,
-          amount: INPUT_START_AMOUNT,
+          amount: INPUT_AMOUNT,
           recipient: "0x0000000000000000000000000000000000000001",
         },
       },
@@ -78,12 +77,6 @@ describe("RelayOrderTrade", () => {
     );
   });
 
-  it("returns the correct maximumAmountIn", () => {
-    expect(trade.maximumAmountIn.quotient.toString()).toEqual(
-      INPUT_END_AMOUNT.toString()
-    );
-  });
-
   it("returns the correct feeAmountIn", () => {
     expect(trade.amountInFee.quotient.toString()).toEqual(
       FEE_START_AMOUNT.toString()
@@ -107,11 +100,8 @@ describe("RelayOrderTrade", () => {
     });
 
     it("returns the correct worst execution price", () => {
-      // sum of max non fee input amounts: 2000 = 2000
-      // outputs: 1000
-      // expected execution price: 1000 / 2000 = 0.5
       expect(trade.worstExecutionPrice().quotient.toString()).toEqual(
-        "500000000000000000"
+        "1000000000000000000"
       );
     });
   });
@@ -130,7 +120,7 @@ describe("RelayOrderTrade", () => {
       },
       input: {
         token: DAI.address,
-        amount: INPUT_START_AMOUNT,
+        amount: INPUT_AMOUNT,
         recipient: "0x0000000000000000000000000000000000000001",
       },
     });
@@ -151,11 +141,8 @@ describe("RelayOrderTrade", () => {
     });
 
     it("returns the correct worst execution price", () => {
-      // sum of max non fee input amounts: 2000 = 2000
-      // outputs: 1000
-      // expected execution price: 1000 / 2000 = 0.5
       expect(trade.worstExecutionPrice().quotient.toString()).toEqual(
-        "500000000000000000"
+        "1000000000000000000"
       );
     });
   });

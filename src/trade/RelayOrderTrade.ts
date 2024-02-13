@@ -50,12 +50,7 @@ export class RelayOrderTrade<
       }
     | undefined;
 
-  private _inputStartEndAmounts:
-    | {
-        startAmount: CurrencyAmount<TInput>;
-        endAmount: CurrencyAmount<TInput>;
-      }
-    | undefined;
+  private _inputAmount: CurrencyAmount<TInput> | undefined;
 
   // This is the "tip" given to fillers of the order
   private getFeeInputStartEndAmounts(): {
@@ -95,12 +90,8 @@ export class RelayOrderTrade<
   }
 
   // This is the input for the order
-  // it has the same start and end amounts
-  private getInputStartEndAmounts(): {
-    startAmount: CurrencyAmount<TInput>;
-    endAmount: CurrencyAmount<TInput>;
-  } {
-    if (this._inputStartEndAmounts) return this._inputStartEndAmounts;
+  private getInputAmount(): CurrencyAmount<TInput> {
+    if (this._inputAmount) return this._inputAmount;
 
     if (!this.order.info.input) {
       throw new Error("no input found");
@@ -121,29 +112,19 @@ export class RelayOrderTrade<
       );
     }
 
-    const startEndAmounts = {
-      startAmount: CurrencyAmount.fromRawAmount(
-        currencyIn,
-        this.order.info.input.amount.toString()
-      ),
-      endAmount: CurrencyAmount.fromRawAmount(
-        currencyIn,
-        this.order.info.input.amount.toString()
-      ),
-    };
+    const inputAmount = CurrencyAmount.fromRawAmount(
+      currencyIn,
+      this.order.info.input.amount.toString()
+    );
 
-    this._inputStartEndAmounts = startEndAmounts;
-    return startEndAmounts;
+    this._inputAmount = inputAmount
+    return inputAmount;
   }
 
   // Gets the start amount for the first non-fee input
   // Relay order inputs only increase, so maximum denotes endAmount
   public get amountIn(): CurrencyAmount<TInput> {
-    return this.getInputStartEndAmounts().startAmount;
-  }
-
-  public get maximumAmountIn(): CurrencyAmount<TInput> {
-    return this.getInputStartEndAmounts().endAmount;
+    return this.getInputAmount();
   }
 
   public get amountInFee(): CurrencyAmount<TInput> {
@@ -179,9 +160,9 @@ export class RelayOrderTrade<
    */
   public worstExecutionPrice(): Price<TInput, TOutput> {
     return new Price(
-      this.maximumAmountIn.currency,
+      this.amountIn.currency,
       this.outputAmount.currency,
-      this.maximumAmountIn.quotient,
+      this.amountIn.quotient,
       this.outputAmount.quotient
     );
   }

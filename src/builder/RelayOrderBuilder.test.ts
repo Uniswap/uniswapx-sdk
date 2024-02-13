@@ -119,8 +119,6 @@ describe("RelayOrderBuilder", () => {
         .deadline(deadline)
         .swapper("0x0000000000000000000000000000000000000001")
         .nonce(BigNumber.from(100))
-        .feeStartTime(deadline - 100)
-        .feeEndTime(deadline)
         .input(DEFAULT_INPUT)
         .fee({
           token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
@@ -132,7 +130,7 @@ describe("RelayOrderBuilder", () => {
         })
         .actions("0x")
         .build()
-    ).toThrow("startAmount must be less than or equal than maxAmount: 100");
+    ).toThrow("startAmount must be less than or equal than endAmount: 100");
   });
 
   it("Deadline already passed", () => {
@@ -182,12 +180,11 @@ describe("RelayOrderBuilder", () => {
   it("Does not throw before an order has not been finished building", () => {
     const deadline = Math.floor(Date.now() / 1000) + 1000;
     expect(() =>
-      // invalid feeStartTime
       builder
         .deadline(deadline)
+        .nonce(BigNumber.from(100))
         .fee(DEFAULT_FEE(deadline))
         .feeStartTime(deadline + 1)
-        .build()
     ).not.toThrowError();
   });
 
