@@ -73,14 +73,19 @@ describe("order utils", () => {
     const relayBuilder = new RelayOrderBuilder(chainId);
     relayOrder = relayBuilder
       .deadline(deadline)
-      .decayEndTime(deadline)
-      .decayStartTime(deadline - 100)
       .swapper("0x0000000000000000000000000000000000000001")
       .nonce(BigNumber.from(100))
       .input({
         token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        amount: BigNumber.from("1000000"),
+        recipient: "0x0000000000000000000000000000000000000000",
+      })
+      .fee({
+        token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
         startAmount: BigNumber.from("1000000"),
-        maxAmount: BigNumber.from("1000000"),
+        endAmount: BigNumber.from("1000000"),
+        startTime: deadline - 100,
+        endTime: deadline,
         recipient: "0x0000000000000000000000000000000000000000",
       })
       .build();

@@ -11,46 +11,52 @@ describe("RelayOrderBuilder", () => {
     builder = new RelayOrderBuilder(1);
   });
 
+  const DEFAULT_INPUT = {
+    token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+    amount: BigNumber.from("1000000"),
+    recipient: "0x0000000000000000000000000000000000000000",
+  }
+
+  const DEFAULT_FEE = (deadline: number) => {
+    return {
+      token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      startAmount: BigNumber.from("1000000"),
+      endAmount: BigNumber.from("1000000"),
+      startTime: deadline - 100,
+      endTime: deadline,
+      recipient: "0x0000000000000000000000000000000000000000",
+    }
+  }
+
   it("Builds a valid order", () => {
     const deadline = Math.floor(Date.now() / 1000) + 1000;
     const order = builder
       .deadline(deadline)
       .swapper("0x0000000000000000000000000000000000000001")
       .nonce(BigNumber.from(100))
-      .decayStartTime(deadline - 100)
-      .decayEndTime(deadline)
-      .action("")
-      .input({
-        token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-        startAmount: BigNumber.from("1000000"),
-        maxAmount: BigNumber.from("1000000"),
-        recipient: "0x0000000000000000000000000000000000000000",
-      })
-
+      .feeStartTime(deadline - 100)
+      .feeEndTime(deadline)
+      .actions("")
+      .input(DEFAULT_INPUT)
+      .fee(DEFAULT_FEE(deadline))
       .build();
 
-    expect(order.info.decayStartTime).toEqual(deadline - 100);
-    expect(order.info.inputs.length).toEqual(1);
+    expect(order.info.fee.startTime).toEqual(deadline - 100);
+    expect(order.info.fee.endTime).toEqual(deadline);
+    expect(order.info.deadline).toEqual(deadline);
   });
 
   it("Regenerates builder from order", () => {
     const deadline = Math.floor(Date.now() / 1000) + 1000;
     const order = builder
       .deadline(deadline)
-
       .swapper("0x0000000000000000000000000000000000000001")
-      .action("")
+      .actions("")
       .nonce(BigNumber.from(100))
-      .decayStartTime(deadline - 100)
-      .decayEndTime(deadline)
-      .input({
-        token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-
-        startAmount: BigNumber.from("1000000"),
-        maxAmount: BigNumber.from("1000000"),
-        recipient: "0x0000000000000000000000000000000000000000",
-      })
-
+      .feeStartTime(deadline - 100)
+      .feeEndTime(deadline)
+      .input(DEFAULT_INPUT)
+      .fee(DEFAULT_FEE(deadline))
       .build();
 
     const regenerated = RelayOrderBuilder.fromOrder(order).build();
@@ -63,15 +69,11 @@ describe("RelayOrderBuilder", () => {
       .deadline(deadline)
       .swapper("0x0000000000000000000000000000000000000001")
       .nonce(BigNumber.from(100))
-      .decayStartTime(deadline - 100)
-      .decayEndTime(deadline)
-      .action("")
-      .input({
-        token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-        startAmount: BigNumber.from("1000000"),
-        maxAmount: BigNumber.from("1000000"),
-        recipient: "0x0000000000000000000000000000000000000000",
-      })
+      .feeStartTime(deadline - 100)
+      .feeEndTime(deadline)
+      .actions("")
+      .input(DEFAULT_INPUT)
+      .fee(DEFAULT_FEE(deadline))
       .build();
 
     const json = order.toJSON();
@@ -87,41 +89,36 @@ describe("RelayOrderBuilder", () => {
       .deadline(deadline)
       .swapper("0x0000000000000000000000000000000000000001")
       .nonce(BigNumber.from(100))
-      .decayStartTime(deadline - 100)
-      .decayEndTime(deadline)
-      .action("")
-      .input({
-        token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-        startAmount: BigNumber.from("1000000"),
-        maxAmount: BigNumber.from("1000000"),
-        recipient: "0x0000000000000000000000000000000000000000",
-      })
+      .feeStartTime(deadline - 100)
+      .feeEndTime(deadline)
+      .actions("")
+      .input(DEFAULT_INPUT)
+      .fee(DEFAULT_FEE(deadline))
       .build();
 
     const regenerated = RelayOrderBuilder.fromOrder(order)
-      .action("new action")
+      .actions("new action")
       .build();
-    expect(regenerated.info.actions).toStrictEqual(["", "new action"]);
+    expect(regenerated.info.actions).toEqual("new action");
   });
 
-  it("allows for addition of multiple actions", () => {
+  it("allows for changing of fee params", () => {
     const deadline = Math.floor(Date.now() / 1000) + 1000;
     const order = builder
       .deadline(deadline)
       .swapper("0x0000000000000000000000000000000000000001")
       .nonce(BigNumber.from(100))
-      .decayStartTime(deadline - 100)
-      .decayEndTime(deadline)
-      .input({
-        token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-        startAmount: BigNumber.from("1000000"),
-        maxAmount: BigNumber.from("1000000"),
-        recipient: "0x0000000000000000000000000000000000000000",
-      })
-      .action("action 1")
-      .action("action 2")
+      .feeStartTime(deadline - 100)
+      .feeEndTime(deadline)
+      .input(DEFAULT_INPUT)
+      .fee(DEFAULT_FEE(deadline))
       .build();
-    expect(order.info.actions).toStrictEqual(["action 1", "action 2"]);
+    
+    const regenerated = RelayOrderBuilder.fromOrder(order)
+      .feeStartTime(deadline - 200)
+      .build();
+
+    expect(regenerated.info.fee.startTime).toEqual(deadline - 200);
   });
 
   it("startAmount >= maxAmount", () => {
@@ -131,12 +128,15 @@ describe("RelayOrderBuilder", () => {
         .deadline(deadline)
         .swapper("0x0000000000000000000000000000000000000001")
         .nonce(BigNumber.from(100))
-        .decayStartTime(deadline - 100)
-        .decayEndTime(deadline)
-        .input({
+        .feeStartTime(deadline - 100)
+        .feeEndTime(deadline)
+        .input(DEFAULT_INPUT)
+        .fee({
           token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
           startAmount: BigNumber.from("100"),
-          maxAmount: BigNumber.from("99"),
+          endAmount: BigNumber.from("99"),
+          startTime: deadline - 100,
+          endTime: deadline,
           recipient: "0x0000000000000000000000000000000000000000",
         })
         .build()
@@ -151,12 +151,13 @@ describe("RelayOrderBuilder", () => {
         .deadline(expiredDeadline)
         .swapper("0x0000000000000000000000000000000000000001")
         .nonce(BigNumber.from(100))
-        .decayStartTime(expiredDeadline - 100)
-        .decayEndTime(expiredDeadline)
-        .input({
+        .input(DEFAULT_INPUT)
+        .fee({
           token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
           startAmount: BigNumber.from("1000000"),
-          maxAmount: BigNumber.from("1000000"),
+          endAmount: BigNumber.from("1000000"),
+          startTime: expiredDeadline - 100,
+          endTime: expiredDeadline,
           recipient: "0x0000000000000000000000000000000000000000",
         })
         .build()
@@ -169,14 +170,15 @@ describe("RelayOrderBuilder", () => {
       .deadline(deadline)
       .swapper("0x0000000000000000000000000000000000000000")
       .nonce(BigNumber.from(100))
-      .decayStartTime(deadline + 1)
-      .decayEndTime(deadline + 1)
-      .input({
+      .input(DEFAULT_INPUT)
+      .fee({
         token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
         startAmount: BigNumber.from("1000000"),
-        maxAmount: BigNumber.from("1200000"),
+        endAmount: BigNumber.from("1200000"),
+        startTime: deadline + 1,
+        endTime: deadline + 1,
         recipient: "0x0000000000000000000000000000000000000000",
-      });
+      })
 
     expect(() => order.build()).toThrow(
       `decayStartTime must be before or same as deadline: ${deadline + 1}`
@@ -187,7 +189,7 @@ describe("RelayOrderBuilder", () => {
     const deadline = Math.floor(Date.now() / 1000) + 1000;
     expect(() =>
       // invalid decayStartTime
-      builder.deadline(deadline).decayStartTime(deadline + 1)
+      builder.deadline(deadline).feeStartTime(deadline + 1)
     ).not.toThrowError();
   });
 
@@ -204,17 +206,35 @@ describe("RelayOrderBuilder", () => {
       builder
         .deadline(deadline)
         .nonce(BigNumber.from(100))
-        .decayStartTime(deadline - 100)
-        .decayEndTime(deadline)
-        .input({
-          token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-          startAmount: BigNumber.from("1000000"),
-          maxAmount: BigNumber.from("1000000"),
-          recipient: "0x0000000000000000000000000000000000000000",
-        })
+        .input(DEFAULT_INPUT)
+        .fee(DEFAULT_FEE(deadline))
         .build()
     ).toThrow("Invariant failed: swapper not set");
   });
+
+  it('must set input', () => {
+    const deadline = Math.floor(Date.now() / 1000) + 1000;
+    expect(() =>
+      builder
+        .deadline(deadline)
+        .nonce(BigNumber.from(100))
+        .swapper("0x0000000000000000000000000000000000000000")
+        .fee(DEFAULT_FEE(deadline))
+        .build()
+    ).toThrow("Invariant failed: input not set");
+  })
+
+  it('must set fee', () => {
+    const deadline = Math.floor(Date.now() / 1000) + 1000;
+    expect(() =>
+      builder
+        .deadline(deadline)
+        .nonce(BigNumber.from(100))
+        .swapper("0x0000000000000000000000000000000000000000")
+        .input(DEFAULT_INPUT)
+        .build()
+    ).toThrow("Invariant failed: fee not set");
+  })
 
   it("decayEndTime after deadline", () => {
     const deadline = Math.floor(Date.now() / 1000) + 1000;
@@ -223,14 +243,10 @@ describe("RelayOrderBuilder", () => {
         .deadline(deadline)
         .swapper("0x0000000000000000000000000000000000000000")
         .nonce(BigNumber.from(100))
-        .decayStartTime(deadline - 100)
-        .decayEndTime(deadline + 1)
-        .input({
-          token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-          startAmount: BigNumber.from("1000000"),
-          maxAmount: BigNumber.from("1000000"),
-          recipient: "0x0000000000000000000000000000000000000000",
-        })
+        .input(DEFAULT_INPUT)
+        .fee(DEFAULT_FEE(deadline))
+        .feeStartTime(deadline - 100)
+        .feeEndTime(deadline + 1)
         .build()
     ).toThrow(
       `Invariant failed: decayEndTime must be before or same as deadline: ${
@@ -245,14 +261,10 @@ describe("RelayOrderBuilder", () => {
       builder
         .deadline(deadline)
         .swapper("0x0000000000000000000000000000000000000000")
-        .decayStartTime(deadline - 100)
-        .decayEndTime(deadline)
-        .input({
-          token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-          startAmount: BigNumber.from("1000000"),
-          maxAmount: BigNumber.from("1000000"),
-          recipient: "0x0000000000000000000000000000000000000000",
-        })
+        .feeStartTime(deadline - 100)
+        .feeEndTime(deadline)
+        .input(DEFAULT_INPUT)
+        .fee(DEFAULT_FEE(deadline))
         .build()
     ).toThrow("Invariant failed: nonce not set");
   });

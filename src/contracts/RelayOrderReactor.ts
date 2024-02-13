@@ -4,7 +4,6 @@
 import type {
   BaseContract,
   BigNumber,
-  BigNumberish,
   BytesLike,
   CallOverrides,
   ContractTransaction,
@@ -36,18 +35,6 @@ export type SignedOrderStructOutput = [string, string] & {
   order: string;
   sig: string;
 };
-
-export declare namespace ISignatureTransfer {
-  export type SignatureTransferDetailsStruct = {
-    to: PromiseOrValue<string>;
-    requestedAmount: PromiseOrValue<BigNumberish>;
-  };
-
-  export type SignatureTransferDetailsStructOutput = [string, BigNumber] & {
-    to: string;
-    requestedAmount: BigNumber;
-  };
-}
 
 export interface RelayOrderReactorInterface extends utils.Interface {
   functions: {
@@ -189,7 +176,7 @@ export interface RelayOrderReactor extends BaseContract {
       signedOrder: SignedOrderStruct,
       feeRecipient: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<ISignatureTransfer.SignatureTransferDetailsStructOutput[]>;
+    ): Promise<void>;
 
     multicall(
       data: PromiseOrValue<BytesLike>[],

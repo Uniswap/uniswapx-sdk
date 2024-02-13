@@ -95,7 +95,7 @@ export type TokenAmount = {
   readonly amount: BigNumber;
 };
 
-export type ResolvedRelayInput = {
+export type ResolvedRelayFee = {
   readonly token: string;
   readonly amount: BigNumber;
   readonly recipient: string;

@@ -4,25 +4,28 @@ import { RelayOrder, RelayOrderInfo } from "./RelayOrder";
 
 describe("RelayOrder", () => {
   const getOrderInfo = (data: Partial<RelayOrderInfo>): RelayOrderInfo => {
-    const decayStartTime = Math.floor(new Date().getTime() / 1000);
-    const decayEndTime = Math.floor(new Date().getTime() / 1000) + 1000;
+    const feeStartTime = Math.floor(new Date().getTime() / 1000);
+    const feeEndTime = Math.floor(new Date().getTime() / 1000) + 1000;
     return Object.assign(
       {
-        deadline: decayEndTime,
+        deadline: feeEndTime,
         reactor: "0x0000000000000000000000000000000000000000",
         swapper: "0x0000000000000000000000000000000000000000",
         nonce: BigNumber.from(10),
-        decayStartTime,
-        decayEndTime,
-        actions: [],
-        inputs: [
-          {
-            token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-            startAmount: BigNumber.from("1000000"),
-            maxAmount: BigNumber.from("1000000"),
-            recipient: "0x0000000000000000000000000000000000000000",
-          },
-        ],
+        actions: "",
+        input: {
+          token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          amount: BigNumber.from("1000000"),
+          recipient: "0x0000000000000000000000000000000000000000",
+        },
+        fee: {
+          token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          startAmount: BigNumber.from("1000000"),
+          endAmount: BigNumber.from("1000000"),
+          startTime: feeStartTime,
+          endTime: feeEndTime,
+          recipient: "0x0000000000000000000000000000000000000000",
+        }
       },
       data
     );
@@ -49,43 +52,31 @@ describe("RelayOrder", () => {
     it("resolves before decayStartTime", () => {
       const order = new RelayOrder(getOrderInfo({}), 1);
       const resolved = order.resolve({
-        timestamp: order.info.decayStartTime - 100,
+        timestamp: order.info.fee.startTime - 100,
       });
-      resolved.inputs.forEach((input, i) => {
-        expect(input.token).toEqual(order.info.inputs[i].token);
-        expect(input.amount).toEqual(order.info.inputs[i].startAmount);
-      });
+      expect(resolved.fee.amount).toEqual(order.info.fee.startAmount);
     });
 
     it("resolves at decayStartTime", () => {
       const order = new RelayOrder(getOrderInfo({}), 1);
-      const resolved = order.resolve({ timestamp: order.info.decayStartTime });
-      resolved.inputs.forEach((input, i) => {
-        expect(input.token).toEqual(order.info.inputs[i].token);
-        expect(input.amount).toEqual(order.info.inputs[i].startAmount);
-      });
+      const resolved = order.resolve({ timestamp: order.info.fee.startTime });
+      expect(resolved.fee.amount).toEqual(order.info.fee.startAmount);
     });
 
     it("resolves at decayEndTime", () => {
       const order = new RelayOrder(getOrderInfo({}), 1);
       const resolved = order.resolve({
-        timestamp: order.info.decayStartTime,
+        timestamp: order.info.fee.endTime,
       });
-      resolved.inputs.forEach((input, i) => {
-        expect(input.token).toEqual(order.info.inputs[i].token);
-        expect(input.amount).toEqual(order.info.inputs[i].maxAmount);
-      });
+      expect(resolved.fee.amount).toEqual(order.info.fee.endAmount);
     });
 
     it("resolves after decayEndTime", () => {
       const order = new RelayOrder(getOrderInfo({}), 1);
       const resolved = order.resolve({
-        timestamp: order.info.decayEndTime + 100,
+        timestamp: order.info.fee.endTime + 100,
       });
-      resolved.inputs.forEach((input, i) => {
-        expect(input.token).toEqual(order.info.inputs[i].token);
-        expect(input.amount).toEqual(order.info.inputs[i].maxAmount);
-      });
+      expect(resolved.fee.amount).toEqual(order.info.fee.endAmount);
     });
   });
 });

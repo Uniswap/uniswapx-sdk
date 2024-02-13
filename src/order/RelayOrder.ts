@@ -16,14 +16,26 @@ import { Order, OrderInfo, OrderResolutionOptions } from "./types";
 
 export type RelayInput = {
   readonly token: string;
+  readonly amount: BigNumber;
   readonly recipient: string;
-  readonly startAmount: BigNumber;
-  readonly maxAmount: BigNumber;
 };
 
-export type RelayInputJSON = Omit<RelayInput, "startAmount" | "maxAmount"> & {
+export type RelayFee = {
+  readonly token: string;
+  readonly startAmount: BigNumber;
+  readonly endAmount: BigNumber;
+  readonly startTime: number;
+  readonly endTime: number;
+  readonly recipient: string;
+};
+
+export type RelayInputJSON = Omit<RelayInput, "amount"> & {
+  amount: string;
+};
+
+export type RelayFeeJSON = Omit<RelayFee, "startAmount" | "endAmount"> & {
   startAmount: string;
-  maxAmount: string;
+  endAmount: string;
 };
 
 type RelayOrderNestedOrderInfo = Omit<
@@ -32,37 +44,39 @@ type RelayOrderNestedOrderInfo = Omit<
 >;
 
 export type RelayOrderInfo = RelayOrderNestedOrderInfo & {
-  inputs: RelayInput[];
-  decayStartTime: number;
-  decayEndTime: number;
-  actions: string[];
+  input: RelayInput;
+  fee: RelayFee;
+  actions: string;
 };
 
-export type RelayOrderInfoJSON = Omit<RelayOrderInfo, "nonce" | "inputs"> & {
+export type RelayOrderInfoJSON = Omit<RelayOrderInfo, "nonce" | "input" | "fee"> & {
   nonce: string;
-  actions: string[];
-  inputs: RelayInputJSON[];
+  input: RelayInputJSON;
+  fee: RelayFeeJSON;
+  actions: string;
 };
 
 type WitnessInfo = {
   reactor: string;
   swapper: string;
-  startAmounts: BigNumber[];
-  recipients: string[];
-  decayStartTime: number;
-  decayEndTime: number;
-  actions: string[];
+  inputRecipient: string;
+  feeStartAmount: BigNumber;
+  feeStartTime: number;
+  feeEndTime: number;
+  feeRecipient: string;
+  actions: string;
 };
 
 const RELAY_WITNESS_TYPES = {
   RelayOrder: [
     { name: "reactor", type: "address" },
     { name: "swapper", type: "address" },
-    { name: "startAmounts", type: "uint256[]" },
-    { name: "recipients", type: "address[]" },
-    { name: "decayStartTime", type: "uint256" },
-    { name: "decayEndTime", type: "uint256" },
-    { name: "actions", type: "bytes[]" },
+    { name: "inputRecipient", type: "address" },
+    { name: "feeStartAmount", type: "uint256" },
+    { name: "feeStartTime", type: "uint256" },
+    { name: "feeEndTime", type: "uint256" },
+    { name: "feeRecipient", type: "address" },
+    { name: "actions", type: "bytes" },
   ],
 };
 
@@ -70,10 +84,9 @@ const RELAY_ORDER_ABI = [
   "tuple(" +
     [
       "tuple(address,address,uint256,uint256)",
-      "tuple(address,address,uint256,uint256)[]",
-      "uint256",
-      "uint256",
-      "bytes[]",
+      "tuple(address,uint256,address)",
+      "tuple(address,uint256,uint256,uint256,uint256,address)",
+      "bytes",
     ].join(",") +
     ")",
 ];
@@ -104,12 +117,19 @@ export class RelayOrder implements Order {
       {
         ...json,
         nonce: BigNumber.from(json.nonce),
-        inputs: json.inputs.map((input) => ({
-          token: input.token,
-          startAmount: BigNumber.from(input.startAmount),
-          maxAmount: BigNumber.from(input.maxAmount),
-          recipient: input.recipient,
-        })),
+        input: {
+          token: json.input.token,
+          amount: BigNumber.from(json.input.amount),
+          recipient: json.input.recipient,
+        },
+        fee: {
+          token: json.fee.token,
+          startAmount: BigNumber.from(json.fee.startAmount),
+          endAmount: BigNumber.from(json.fee.endAmount),
+          startTime: json.fee.startTime,
+          endTime: json.fee.endTime,
+          recipient: json.fee.recipient,
+        },
       },
       chainId,
       _permit2Address
@@ -122,9 +142,8 @@ export class RelayOrder implements Order {
     const [
       [
         [reactor, swapper, nonce, deadline],
-        inputs,
-        decayStartTime,
-        decayEndTime,
+        input,
+        fee,
         actions,
       ],
     ] = decoded;
@@ -134,24 +153,8 @@ export class RelayOrder implements Order {
         swapper,
         nonce,
         deadline: deadline.toNumber(),
-        inputs: inputs.map(
-          ([token, recipient, startAmount, maxAmount]: [
-            string,
-            number,
-            number,
-            string,
-            boolean
-          ]) => {
-            return {
-              token,
-              startAmount,
-              maxAmount,
-              recipient,
-            };
-          }
-        ),
-        decayStartTime: decayStartTime.toNumber(),
-        decayEndTime: decayEndTime.toNumber(),
+        input,
+        fee,
         actions: actions,
       },
       chainId,
@@ -171,14 +174,19 @@ export class RelayOrder implements Order {
       nonce: this.info.nonce.toString(),
       deadline: this.info.deadline,
       actions: this.info.actions,
-      decayStartTime: this.info.decayStartTime,
-      decayEndTime: this.info.decayEndTime,
-      inputs: this.info.inputs.map((input) => ({
-        token: input.token,
-        startAmount: input.startAmount.toString(),
-        maxAmount: input.maxAmount.toString(),
-        recipient: input.recipient,
-      })),
+      input: {
+        token: this.info.input.token,
+        amount: this.info.input.amount.toString(),
+        recipient: this.info.input.recipient,
+      },
+      fee: {
+        token: this.info.fee.token,
+        startAmount: this.info.fee.startAmount.toString(),
+        endAmount: this.info.fee.endAmount.toString(),
+        startTime: this.info.fee.startTime,
+        endTime: this.info.fee.endTime,
+        recipient: this.info.fee.recipient,
+      }
     };
   }
 
@@ -192,14 +200,19 @@ export class RelayOrder implements Order {
           this.info.nonce,
           this.info.deadline,
         ],
-        this.info.inputs.map((input) => [
-          input.token,
-          input.recipient,
-          input.startAmount,
-          input.maxAmount,
-        ]),
-        this.info.decayStartTime,
-        this.info.decayEndTime,
+        [
+          this.info.input.token,
+          this.info.input.amount,
+          this.info.input.recipient,
+        ],
+        [
+          this.info.fee.token,
+          this.info.fee.startAmount,
+          this.info.fee.endAmount,
+          this.info.fee.startTime,
+          this.info.fee.endTime,
+          this.info.fee.recipient,
+        ],
         this.info.actions,
       ],
     ]);
@@ -249,30 +262,34 @@ export class RelayOrder implements Order {
    */
   resolve(options: OrderResolutionOptions): ResolvedRelayOrder {
     return {
-      inputs: this.info.inputs.map((input) => {
-        return {
-          token: input.token,
+      fee: {
+          token: this.info.fee.token,
           amount: getDecayedAmount(
             {
-              decayStartTime: this.info.decayStartTime,
-              decayEndTime: this.info.decayEndTime,
-              startAmount: input.startAmount,
-              endAmount: input.maxAmount,
+              decayStartTime: this.info.fee.startTime,
+              decayEndTime: this.info.fee.endTime,
+              startAmount: this.info.fee.startAmount,
+              endAmount: this.info.fee.endAmount,
             },
             options.timestamp
           ),
-          recipient: input.recipient,
-        };
-      }),
+          recipient: this.info.fee.recipient,
+      },
     };
   }
 
   private toPermit(): PermitBatchTransferFrom {
     return {
-      permitted: this.info.inputs.map((input) => ({
-        token: input.token,
-        amount: input.maxAmount,
-      })),
+      permitted: [
+        {
+          token: this.info.input.token,
+          amount: this.info.input.amount,
+        },
+        {
+          token: this.info.fee.token,
+          amount: this.info.fee.endAmount,
+        },
+      ],
       spender: this.info.reactor,
       nonce: this.info.nonce,
       deadline: this.info.deadline,
@@ -283,10 +300,11 @@ export class RelayOrder implements Order {
     return {
       reactor: this.info.reactor,
       swapper: this.info.swapper,
-      startAmounts: this.info.inputs.map((input) => input.startAmount),
-      recipients: this.info.inputs.map((input) => input.recipient),
-      decayStartTime: this.info.decayStartTime,
-      decayEndTime: this.info.decayEndTime,
+      inputRecipient: this.info.input.recipient,
+      feeStartAmount: this.info.fee.startAmount,
+      feeStartTime: this.info.fee.startTime,
+      feeEndTime: this.info.fee.endTime,
+      feeRecipient: this.info.fee.recipient,
       actions: this.info.actions,
     };
   }
