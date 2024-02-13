@@ -117,7 +117,7 @@ export class RelayOrderTrade<
       this.order.info.input.amount.toString()
     );
 
-    this._inputAmount = inputAmount
+    this._inputAmount = inputAmount;
     return inputAmount;
   }
 
