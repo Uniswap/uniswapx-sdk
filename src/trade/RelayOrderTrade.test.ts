@@ -19,10 +19,10 @@ const DAI = new Token(
 );
 
 describe("RelayOrderTrade", () => {
-  const FEE_INPUT_AMOUNT = BigNumber.from(100);
-  const FEE_MAXIMUM_INPUT_AMOUNT = BigNumber.from(200);
-  const NON_FEE_INPUT_AMOUNT = BigNumber.from(1000);
-  const NON_FEE_MAXIMUM_INPUT_AMOUNT = BigNumber.from(2000);
+  const FEE_START_AMOUNT = BigNumber.from(100);
+  const FEE_END_AMOUNT = BigNumber.from(200);
+  const INPUT_START_AMOUNT = BigNumber.from(1000);
+  const INPUT_END_AMOUNT = BigNumber.from(2000);
 
   // 1000 DAI
   const MOCK_SWAP_OUTPUT_AMOUNT = CurrencyAmount.fromRawAmount(
@@ -32,31 +32,28 @@ describe("RelayOrderTrade", () => {
   const OUTPUT_AMOUNT = BigNumber.from("1000000000000000000000");
 
   const getOrderInfo = (data: Partial<RelayOrderInfo>): RelayOrderInfo => {
-    const decayStartTime = Math.floor(new Date().getTime() / 1000);
-    const decayEndTime = Math.floor(new Date().getTime() / 1000) + 1000;
+    const feeStartTime = Math.floor(new Date().getTime() / 1000);
+    const feeEndTime = Math.floor(new Date().getTime() / 1000) + 1000;
     return Object.assign(
       {
-        deadline: decayEndTime,
+        deadline: feeEndTime,
         reactor: "0x0000000000000000000000000000000000000000",
         swapper: "0x0000000000000000000000000000000000000000",
         nonce: BigNumber.from(10),
-        decayStartTime,
-        decayEndTime,
         actions: [],
-        inputs: [
-          {
-            token: USDC.address,
-            startAmount: FEE_INPUT_AMOUNT,
-            maxAmount: FEE_MAXIMUM_INPUT_AMOUNT,
-            recipient: ethers.constants.AddressZero,
-          },
-          {
-            token: USDC.address,
-            startAmount: NON_FEE_INPUT_AMOUNT,
-            maxAmount: NON_FEE_MAXIMUM_INPUT_AMOUNT,
-            recipient: "0x0000000000000000000000000000000000000001",
-          },
-        ],
+        fee: {
+          token: USDC.address,
+          startAmount: FEE_START_AMOUNT,
+          maxAmount: FEE_END_AMOUNT,
+          feeStartTime,
+          feeEndTime,
+          recipient: ethers.constants.AddressZero,
+        },
+        input: {
+          token: USDC.address,
+          amount: INPUT_START_AMOUNT,
+          recipient: "0x0000000000000000000000000000000000000001",
+        },
       },
       data
     );
@@ -71,9 +68,8 @@ describe("RelayOrderTrade", () => {
     tradeType: TradeType.EXACT_INPUT,
   });
 
-  it("returns the right input amounts for an exact-in trade", () => {
-    expect(trade.inputAmounts[0].quotient.toString()).toEqual("100");
-    expect(trade.inputAmounts[1].quotient.toString()).toEqual("1000");
+  it("returns the right amountIn for an exact-in trade", () => {
+    expect(trade.amountIn.quotient.toString()).toEqual("1000");
   });
 
   it("returns the correct output amount", () => {
@@ -84,13 +80,19 @@ describe("RelayOrderTrade", () => {
 
   it("returns the correct maximumAmountIn", () => {
     expect(trade.maximumAmountIn.quotient.toString()).toEqual(
-      NON_FEE_MAXIMUM_INPUT_AMOUNT.toString()
+      INPUT_END_AMOUNT.toString()
+    );
+  });
+
+  it("returns the correct feeAmountIn", () => {
+    expect(trade.amountInFee.quotient.toString()).toEqual(
+      FEE_START_AMOUNT.toString()
     );
   });
 
   it("returns the correct feeMaximumAmountIn", () => {
     expect(trade.maximumAmountInFee.quotient.toString()).toEqual(
-      FEE_MAXIMUM_INPUT_AMOUNT.toString()
+      FEE_END_AMOUNT.toString()
     );
   });
 
@@ -114,22 +116,23 @@ describe("RelayOrderTrade", () => {
     });
   });
 
-  describe("inputs are different tokens", () => {
+  describe("input and fee are different tokens", () => {
+    const feeStartTime = Math.floor(new Date().getTime() / 1000);
+    const feeEndTime = Math.floor(new Date().getTime() / 1000) + 1000;
     const orderInfo = getOrderInfo({
-      inputs: [
-        {
-          token: USDC.address,
-          startAmount: FEE_INPUT_AMOUNT,
-          maxAmount: FEE_MAXIMUM_INPUT_AMOUNT,
-          recipient: ethers.constants.AddressZero,
-        },
-        {
-          token: DAI.address,
-          startAmount: NON_FEE_INPUT_AMOUNT,
-          maxAmount: NON_FEE_MAXIMUM_INPUT_AMOUNT,
-          recipient: "0x0000000000000000000000000000000000000001",
-        },
-      ],
+      fee: {
+        token: USDC.address,
+        startAmount: FEE_START_AMOUNT,
+        endAmount: FEE_END_AMOUNT,
+        startTime: feeStartTime,
+        endTime: feeEndTime,
+        recipient: ethers.constants.AddressZero,
+      },
+      input: {
+        token: DAI.address,
+        amount: INPUT_START_AMOUNT,
+        recipient: "0x0000000000000000000000000000000000000001",
+      },
     });
     const trade = new RelayOrderTrade<Currency, Currency, TradeType>({
       currenciesIn: [USDC, DAI],

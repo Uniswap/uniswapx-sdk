@@ -49,7 +49,10 @@ export type RelayOrderInfo = RelayOrderNestedOrderInfo & {
   actions: string;
 };
 
-export type RelayOrderInfoJSON = Omit<RelayOrderInfo, "nonce" | "input" | "fee"> & {
+export type RelayOrderInfoJSON = Omit<
+  RelayOrderInfo,
+  "nonce" | "input" | "fee"
+> & {
   nonce: string;
   input: RelayInputJSON;
   fee: RelayFeeJSON;
@@ -142,8 +145,15 @@ export class RelayOrder implements Order {
     const [
       [
         [reactor, swapper, nonce, deadline],
-        input,
-        fee,
+        [inputToken, inputAmount, inputRecipient],
+        [
+          feeToken,
+          feeStartAmount,
+          feeEndAmount,
+          feeStartTime,
+          feeEndTime,
+          feeRecipient,
+        ],
         actions,
       ],
     ] = decoded;
@@ -153,8 +163,19 @@ export class RelayOrder implements Order {
         swapper,
         nonce,
         deadline: deadline.toNumber(),
-        input,
-        fee,
+        input: {
+          token: inputToken,
+          amount: inputAmount,
+          recipient: inputRecipient,
+        },
+        fee: {
+          token: feeToken,
+          startAmount: feeStartAmount,
+          endAmount: feeEndAmount,
+          startTime: feeStartTime.toNumber(),
+          endTime: feeEndTime.toNumber(),
+          recipient: feeRecipient,
+        },
         actions: actions,
       },
       chainId,
@@ -186,7 +207,7 @@ export class RelayOrder implements Order {
         startTime: this.info.fee.startTime,
         endTime: this.info.fee.endTime,
         recipient: this.info.fee.recipient,
-      }
+      },
     };
   }
 
@@ -263,17 +284,17 @@ export class RelayOrder implements Order {
   resolve(options: OrderResolutionOptions): ResolvedRelayOrder {
     return {
       fee: {
-          token: this.info.fee.token,
-          amount: getDecayedAmount(
-            {
-              decayStartTime: this.info.fee.startTime,
-              decayEndTime: this.info.fee.endTime,
-              startAmount: this.info.fee.startAmount,
-              endAmount: this.info.fee.endAmount,
-            },
-            options.timestamp
-          ),
-          recipient: this.info.fee.recipient,
+        token: this.info.fee.token,
+        amount: getDecayedAmount(
+          {
+            decayStartTime: this.info.fee.startTime,
+            decayEndTime: this.info.fee.endTime,
+            startAmount: this.info.fee.startAmount,
+            endAmount: this.info.fee.endAmount,
+          },
+          options.timestamp
+        ),
+        recipient: this.info.fee.recipient,
       },
     };
   }

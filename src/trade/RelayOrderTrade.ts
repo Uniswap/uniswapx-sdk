@@ -1,6 +1,5 @@
 import { Currency, CurrencyAmount, Price, TradeType } from "@uniswap/sdk-core";
 
-import { RELAY_SENTINEL_RECIPIENT } from "../constants";
 import { RelayOrder, RelayOrderInfo } from "../order";
 
 import { areCurrenciesEqual } from "./utils";
@@ -16,9 +15,7 @@ export class RelayOrderTrade<
   public readonly tradeType: TTradeType;
   public readonly order: RelayOrder;
 
-  private _inputAmounts: CurrencyAmount<TInput>[] | undefined;
   private _outputAmount: CurrencyAmount<TOutput>;
-
   private _currenciesIn: TInput[];
 
   // Since Relay orders have no concept of an output amount, it must be provided as a constructor param
@@ -42,41 +39,18 @@ export class RelayOrderTrade<
     this.order = new RelayOrder(orderInfo, outputAmount.currency.chainId);
   }
 
-  public get inputAmounts(): CurrencyAmount<TInput>[] {
-    if (this._inputAmounts) return this._inputAmounts;
-
-    const amounts = this.order.info.inputs.map((input) => {
-      // assume single chain ids across all outputs for now
-      const currencyIn = this._currenciesIn.find((currency) =>
-        areCurrenciesEqual(currency, input.token, currency.chainId)
-      );
-
-      if (!currencyIn) {
-        throw new Error("currency not found in output array");
-      }
-
-      return CurrencyAmount.fromRawAmount(
-        currencyIn,
-        input.startAmount.toString()
-      );
-    });
-
-    this._inputAmounts = amounts;
-    return amounts;
-  }
-
   public get outputAmount(): CurrencyAmount<TOutput> {
     return this._outputAmount;
   }
 
-  private _firstFeeInputStartEndAmount:
+  private _feeStartEndAmounts:
     | {
         startAmount: CurrencyAmount<TInput>;
         endAmount: CurrencyAmount<TInput>;
       }
     | undefined;
 
-  private _firstNonFeeInputStartEndAmount:
+  private _inputStartEndAmounts:
     | {
         startAmount: CurrencyAmount<TInput>;
         endAmount: CurrencyAmount<TInput>;
@@ -84,28 +58,19 @@ export class RelayOrderTrade<
     | undefined;
 
   // This is the "tip" given to fillers of the order
-  private getFirstFeeInputStartEndAmount(): {
+  private getFeeInputStartEndAmounts(): {
     startAmount: CurrencyAmount<TInput>;
     endAmount: CurrencyAmount<TInput>;
   } {
-    if (this._firstFeeInputStartEndAmount)
-      return this._firstFeeInputStartEndAmount;
+    if (this._feeStartEndAmounts) return this._feeStartEndAmounts;
 
-    if (this.order.info.inputs.length === 0) {
-      throw new Error("there must be at least one input token");
-    }
-    const input = this.order.info.inputs.find(
-      (input) => input.recipient === RELAY_SENTINEL_RECIPIENT
-    );
-
-    // The order does not contain a tip for the filler
-    if (!input) {
-      throw new Error("no fee input found");
+    if (!this.order.info.fee) {
+      throw new Error("no fee found");
     }
 
     // assume single chain ids across all outputs for now
     const currencyIn = this._currenciesIn.find((currency) =>
-      areCurrenciesEqual(currency, input.token, currency.chainId)
+      areCurrenciesEqual(currency, this.order.info.fee.token, currency.chainId)
     );
 
     if (!currencyIn) {
@@ -117,42 +82,37 @@ export class RelayOrderTrade<
     const startEndAmounts = {
       startAmount: CurrencyAmount.fromRawAmount(
         currencyIn,
-        input.startAmount.toString()
+        this.order.info.fee.startAmount.toString()
       ),
       endAmount: CurrencyAmount.fromRawAmount(
         currencyIn,
-        input.maxAmount.toString()
+        this.order.info.fee.endAmount.toString()
       ),
     };
 
-    this._firstFeeInputStartEndAmount = startEndAmounts;
+    this._feeStartEndAmounts = startEndAmounts;
     return startEndAmounts;
   }
 
-  // This is the first non-fee input, usually used for an encoded swap but not guaranteed so the recipipent MUST be checked
-  private getFirstNonFeeInputStartEndAmount(): {
+  // This is the input for the order
+  // it has the same start and end amounts
+  private getInputStartEndAmounts(): {
     startAmount: CurrencyAmount<TInput>;
     endAmount: CurrencyAmount<TInput>;
   } {
-    if (this._firstNonFeeInputStartEndAmount)
-      return this._firstNonFeeInputStartEndAmount;
+    if (this._inputStartEndAmounts) return this._inputStartEndAmounts;
 
-    if (this.order.info.inputs.length === 0) {
-      throw new Error("there must be at least one input token");
-    }
-
-    // Not going to filler (denoted by sentinel address)
-    const input = this.order.info.inputs.find(
-      (input) => input.recipient !== RELAY_SENTINEL_RECIPIENT
-    );
-
-    if (!input) {
-      throw new Error("no non-fee input found");
+    if (!this.order.info.input) {
+      throw new Error("no input found");
     }
 
     // assume single chain ids across all outputs for now
     const currencyIn = this._currenciesIn.find((currency) =>
-      areCurrenciesEqual(currency, input.token, currency.chainId)
+      areCurrenciesEqual(
+        currency,
+        this.order.info.input.token,
+        currency.chainId
+      )
     );
 
     if (!currencyIn) {
@@ -164,55 +124,34 @@ export class RelayOrderTrade<
     const startEndAmounts = {
       startAmount: CurrencyAmount.fromRawAmount(
         currencyIn,
-        input.startAmount.toString()
+        this.order.info.input.amount.toString()
       ),
       endAmount: CurrencyAmount.fromRawAmount(
         currencyIn,
-        input.maxAmount.toString()
+        this.order.info.input.amount.toString()
       ),
     };
 
-    this._firstNonFeeInputStartEndAmount = startEndAmounts;
+    this._inputStartEndAmounts = startEndAmounts;
     return startEndAmounts;
   }
 
   // Gets the start amount for the first non-fee input
   // Relay order inputs only increase, so maximum denotes endAmount
   public get amountIn(): CurrencyAmount<TInput> {
-    return this.getFirstNonFeeInputStartEndAmount().startAmount;
+    return this.getInputStartEndAmounts().startAmount;
   }
 
   public get maximumAmountIn(): CurrencyAmount<TInput> {
-    return this.getFirstNonFeeInputStartEndAmount().endAmount;
+    return this.getInputStartEndAmounts().endAmount;
   }
 
   public get amountInFee(): CurrencyAmount<TInput> {
-    return this.getFirstFeeInputStartEndAmount().startAmount;
+    return this.getFeeInputStartEndAmounts().startAmount;
   }
 
   public get maximumAmountInFee(): CurrencyAmount<TInput> {
-    return this.getFirstFeeInputStartEndAmount().endAmount;
-  }
-
-  public get canAggregateInputs(): boolean {
-    // all inputs must be the same currency
-    return this.inputAmounts.every((input) =>
-      input.currency.equals(this.inputAmounts[0].currency)
-    );
-  }
-
-  public aggregateInputAmounts(): CurrencyAmount<TInput> {
-    if (!this.canAggregateInputs) {
-      throw new Error("cannot aggregate inputs");
-    }
-    return this.inputAmounts.reduce((prev, curr) => prev.add(curr));
-  }
-
-  public aggregateMaximumAmountIn(): CurrencyAmount<TInput> {
-    if (!this.canAggregateInputs) {
-      throw new Error("cannot aggregate inputs");
-    }
-    return this.maximumAmountInFee.add(this.maximumAmountIn);
+    return this.getFeeInputStartEndAmounts().endAmount;
   }
 
   private _executionPrice: Price<TInput, TOutput> | undefined;

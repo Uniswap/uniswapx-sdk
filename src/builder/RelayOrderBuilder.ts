@@ -120,11 +120,11 @@ export class RelayOrderBuilder {
 
     invariant(
       !this.info.deadline || this.info.fee.startTime <= this.info.deadline,
-      `fee startTime must be before or same as deadline: ${this.info.fee.startTime}`
+      `feeStartTime must be before or same as deadline: ${this.info.fee.startTime}`
     );
     invariant(
       !this.info.deadline || this.info.fee.endTime <= this.info.deadline,
-      `endTime must be before or same as deadline: ${this.info.fee.endTime}`
+      `feeEndTime must be before or same as deadline: ${this.info.fee.endTime}`
     );
 
     return new RelayOrder(
