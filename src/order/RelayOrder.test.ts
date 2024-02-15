@@ -24,7 +24,6 @@ describe("RelayOrder", () => {
           endAmount: BigNumber.from("1000000"),
           startTime: feeStartTime,
           endTime: feeEndTime,
-          recipient: "0x0000000000000000000000000000000000000000",
         },
       },
       data
