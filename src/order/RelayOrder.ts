@@ -45,7 +45,7 @@ type RelayOrderNestedOrderInfo = Omit<
 export type RelayOrderInfo = RelayOrderNestedOrderInfo & {
   input: RelayInput;
   fee: RelayFee;
-  actions: string;
+  universalRouterCalldata: string;
 };
 
 export type RelayOrderInfoJSON = Omit<
@@ -55,7 +55,7 @@ export type RelayOrderInfoJSON = Omit<
   nonce: string;
   input: RelayInputJSON;
   fee: RelayFeeJSON;
-  actions: string;
+  universalRouterCalldata: string;
 };
 
 type WitnessInfo = {
@@ -65,7 +65,7 @@ type WitnessInfo = {
   feeStartAmount: BigNumber;
   feeStartTime: number;
   feeEndTime: number;
-  actions: string;
+  universalRouterCalldata: string;
 };
 
 const RELAY_WITNESS_TYPES = {
@@ -76,7 +76,7 @@ const RELAY_WITNESS_TYPES = {
     { name: "feeStartAmount", type: "uint256" },
     { name: "feeStartTime", type: "uint256" },
     { name: "feeEndTime", type: "uint256" },
-    { name: "actions", type: "bytes" },
+    { name: "universalRouterCalldata", type: "bytes" },
   ],
 };
 
@@ -143,7 +143,7 @@ export class RelayOrder implements Order {
         [reactor, swapper, nonce, deadline],
         [inputToken, inputAmount, inputRecipient],
         [feeToken, feeStartAmount, feeEndAmount, feeStartTime, feeEndTime],
-        actions,
+        universalRouterCalldata,
       ],
     ] = decoded;
     return new RelayOrder(
@@ -164,7 +164,7 @@ export class RelayOrder implements Order {
           startTime: feeStartTime.toNumber(),
           endTime: feeEndTime.toNumber(),
         },
-        actions: actions,
+        universalRouterCalldata: universalRouterCalldata,
       },
       chainId,
       permit2
@@ -182,7 +182,7 @@ export class RelayOrder implements Order {
       swapper: this.info.swapper,
       nonce: this.info.nonce.toString(),
       deadline: this.info.deadline,
-      actions: this.info.actions,
+      universalRouterCalldata: this.info.universalRouterCalldata,
       input: {
         token: this.info.input.token,
         amount: this.info.input.amount.toString(),
@@ -220,7 +220,7 @@ export class RelayOrder implements Order {
           this.info.fee.startTime,
           this.info.fee.endTime,
         ],
-        this.info.actions,
+        this.info.universalRouterCalldata,
       ],
     ]);
   }
@@ -310,7 +310,7 @@ export class RelayOrder implements Order {
       feeStartAmount: this.info.fee.startAmount,
       feeStartTime: this.info.fee.startTime,
       feeEndTime: this.info.fee.endTime,
-      actions: this.info.actions,
+      universalRouterCalldata: this.info.universalRouterCalldata,
     };
   }
 

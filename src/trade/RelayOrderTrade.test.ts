@@ -39,7 +39,7 @@ describe("RelayOrderTrade", () => {
         reactor: "0x0000000000000000000000000000000000000000",
         swapper: "0x0000000000000000000000000000000000000000",
         nonce: BigNumber.from(10),
-        actions: [],
+        universalRouterCalldata: [],
         fee: {
           token: USDC.address,
           startAmount: FEE_START_AMOUNT,

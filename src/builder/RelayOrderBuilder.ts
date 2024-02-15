@@ -17,7 +17,7 @@ export class RelayOrderBuilder {
       .deadline(order.info.deadline)
       .swapper(order.info.swapper)
       .nonce(order.info.nonce)
-      .actions(order.info.actions)
+      .universalRouterCalldata(order.info.universalRouterCalldata)
       .input(order.info.input)
       .fee(order.info.fee)
       .feeStartTime(order.info.fee.startTime)
@@ -65,8 +65,8 @@ export class RelayOrderBuilder {
   }
 
   // TODO: perform some calldata validation here
-  actions(actions: string): RelayOrderBuilder {
-    this.info.actions = actions;
+  universalRouterCalldata(universalRouterCalldata: string): RelayOrderBuilder {
+    this.info.universalRouterCalldata = universalRouterCalldata;
     return this;
   }
 
@@ -114,7 +114,10 @@ export class RelayOrderBuilder {
       `Deadline must be in the future: ${this.info.deadline}`
     );
     invariant(this.info.swapper !== undefined, "swapper not set");
-    invariant(this.info.actions !== undefined, "actions not set");
+    invariant(
+      this.info.universalRouterCalldata !== undefined,
+      "universalRouterCalldata not set"
+    );
     invariant(this.info.input !== undefined, "input not set");
     invariant(this.info.fee !== undefined, "fee not set");
 
@@ -135,7 +138,7 @@ export class RelayOrderBuilder {
         deadline: this.info.deadline,
         input: this.info.input,
         fee: this.info.fee,
-        actions: this.info.actions,
+        universalRouterCalldata: this.info.universalRouterCalldata,
       }),
       this.chainId,
       this.permit2Address

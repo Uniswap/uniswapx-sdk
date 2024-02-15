@@ -75,7 +75,7 @@ describe("order utils", () => {
       .deadline(deadline)
       .swapper("0x0000000000000000000000000000000000000001")
       .nonce(BigNumber.from(100))
-      .actions("0x")
+      .universalRouterCalldata("0x")
       .input({
         token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
         amount: BigNumber.from("1000000"),
@@ -116,8 +116,8 @@ describe("order utils", () => {
     //   expect(parseOrder(encodedOrder, chainId)).toEqual(relayOrder);
     // })
 
-    // it('parses RelayOrder with actions', () => {
-    //   relayOrder.info.actions.push("0x0000000000000000000000000000000000000123");
+    // it('parses RelayOrder with universalRouterCalldata', () => {
+    //   relayOrder.info.universalRouterCalldata.push("0x0000000000000000000000000000000000000123");
     //   const encodedOrder = relayOrder.serialize();
     //   expect(parseOrder(encodedOrder, chainId)).toEqual(relayOrder);
     // })

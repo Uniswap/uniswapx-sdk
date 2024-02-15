@@ -33,7 +33,7 @@ describe("RelayOrderBuilder", () => {
       .deadline(deadline)
       .swapper("0x0000000000000000000000000000000000000001")
       .nonce(BigNumber.from(100))
-      .actions("0x")
+      .universalRouterCalldata("0x")
       .input(DEFAULT_INPUT)
       .fee(DEFAULT_FEE(deadline))
       .build();
@@ -48,7 +48,7 @@ describe("RelayOrderBuilder", () => {
     const order = builder
       .deadline(deadline)
       .swapper("0x0000000000000000000000000000000000000001")
-      .actions("0x")
+      .universalRouterCalldata("0x")
       .nonce(BigNumber.from(100))
       .input(DEFAULT_INPUT)
       .fee(DEFAULT_FEE(deadline))
@@ -64,7 +64,7 @@ describe("RelayOrderBuilder", () => {
       .deadline(deadline)
       .swapper("0x0000000000000000000000000000000000000001")
       .nonce(BigNumber.from(100))
-      .actions("0x")
+      .universalRouterCalldata("0x")
       .input(DEFAULT_INPUT)
       .fee(DEFAULT_FEE(deadline))
       .build();
@@ -82,15 +82,15 @@ describe("RelayOrderBuilder", () => {
       .deadline(deadline)
       .swapper("0x0000000000000000000000000000000000000001")
       .nonce(BigNumber.from(100))
-      .actions("0x")
+      .universalRouterCalldata("0x")
       .input(DEFAULT_INPUT)
       .fee(DEFAULT_FEE(deadline))
       .build();
 
     const regenerated = RelayOrderBuilder.fromOrder(order)
-      .actions("new action")
+      .universalRouterCalldata("new action")
       .build();
-    expect(regenerated.info.actions).toEqual("new action");
+    expect(regenerated.info.universalRouterCalldata).toEqual("new action");
   });
 
   it("allows for changing of fee params", () => {
@@ -101,7 +101,7 @@ describe("RelayOrderBuilder", () => {
       .nonce(BigNumber.from(100))
       .input(DEFAULT_INPUT)
       .fee(DEFAULT_FEE(deadline))
-      .actions("0x")
+      .universalRouterCalldata("0x")
       .build();
 
     const regenerated = RelayOrderBuilder.fromOrder(order)
@@ -126,7 +126,7 @@ describe("RelayOrderBuilder", () => {
           startTime: deadline - 100,
           endTime: deadline,
         })
-        .actions("0x")
+        .universalRouterCalldata("0x")
         .build()
     ).toThrow("startAmount must be less than or equal than endAmount: 100");
   });
@@ -147,7 +147,7 @@ describe("RelayOrderBuilder", () => {
           startTime: expiredDeadline - 100,
           endTime: expiredDeadline,
         })
-        .actions("0x")
+        .universalRouterCalldata("0x")
         .build()
     ).toThrow(`Deadline must be in the future: ${expiredDeadline}`);
   });
@@ -158,7 +158,7 @@ describe("RelayOrderBuilder", () => {
       .deadline(deadline)
       .swapper("0x0000000000000000000000000000000000000000")
       .nonce(BigNumber.from(100))
-      .actions("0x")
+      .universalRouterCalldata("0x")
       .input(DEFAULT_INPUT)
       .fee({
         token: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
@@ -199,7 +199,7 @@ describe("RelayOrderBuilder", () => {
         .nonce(BigNumber.from(100))
         .input(DEFAULT_INPUT)
         .fee(DEFAULT_FEE(deadline))
-        .actions("0x")
+        .universalRouterCalldata("0x")
         .build()
     ).toThrow("Invariant failed: swapper not set");
   });
@@ -212,12 +212,12 @@ describe("RelayOrderBuilder", () => {
         .nonce(BigNumber.from(100))
         .swapper("0x0000000000000000000000000000000000000000")
         .fee(DEFAULT_FEE(deadline))
-        .actions("0x")
+        .universalRouterCalldata("0x")
         .build()
     ).toThrow("Invariant failed: input not set");
   });
 
-  it("must set actions", () => {
+  it("must set universalRouterCalldata", () => {
     const deadline = Math.floor(Date.now() / 1000) + 1000;
     expect(() =>
       builder
@@ -227,7 +227,7 @@ describe("RelayOrderBuilder", () => {
         .input(DEFAULT_INPUT)
         .fee(DEFAULT_FEE(deadline))
         .build()
-    ).toThrow("Invariant failed: actions not set");
+    ).toThrow("Invariant failed: universalRouterCalldata not set");
   });
 
   it("must set fee", () => {
@@ -238,7 +238,7 @@ describe("RelayOrderBuilder", () => {
         .nonce(BigNumber.from(100))
         .swapper("0x0000000000000000000000000000000000000000")
         .input(DEFAULT_INPUT)
-        .actions("0x")
+        .universalRouterCalldata("0x")
         .build()
     ).toThrow("Invariant failed: fee not set");
   });
@@ -254,7 +254,7 @@ describe("RelayOrderBuilder", () => {
         .fee(DEFAULT_FEE(deadline))
         .feeStartTime(deadline - 100)
         .feeEndTime(deadline + 1)
-        .actions("0x")
+        .universalRouterCalldata("0x")
         .build()
     ).toThrow(
       `Invariant failed: feeEndTime must be before or same as deadline: ${
@@ -271,7 +271,7 @@ describe("RelayOrderBuilder", () => {
         .swapper("0x0000000000000000000000000000000000000000")
         .input(DEFAULT_INPUT)
         .fee(DEFAULT_FEE(deadline))
-        .actions("0x")
+        .universalRouterCalldata("0x")
         .build()
     ).toThrow("Invariant failed: nonce not set");
   });
