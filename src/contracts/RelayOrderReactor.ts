@@ -4,6 +4,7 @@
 import type {
   BaseContract,
   BigNumber,
+  BigNumberish,
   BytesLike,
   CallOverrides,
   ContractTransaction,
@@ -40,7 +41,7 @@ export interface RelayOrderReactorInterface extends utils.Interface {
   functions: {
     "execute((bytes,bytes),address)": FunctionFragment;
     "multicall(bytes[])": FunctionFragment;
-    "permit(address,bytes)": FunctionFragment;
+    "permit(address,address,address,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
     "permit2()": FunctionFragment;
     "universalRouter()": FunctionFragment;
   };
@@ -64,7 +65,16 @@ export interface RelayOrderReactorInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "permit",
-    values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>]
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BytesLike>
+    ]
   ): string;
   encodeFunctionData(functionFragment: "permit2", values?: undefined): string;
   encodeFunctionData(
@@ -141,7 +151,13 @@ export interface RelayOrderReactor extends BaseContract {
 
     permit(
       token: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -163,7 +179,13 @@ export interface RelayOrderReactor extends BaseContract {
 
   permit(
     token: PromiseOrValue<string>,
-    data: PromiseOrValue<BytesLike>,
+    owner: PromiseOrValue<string>,
+    spender: PromiseOrValue<string>,
+    amount: PromiseOrValue<BigNumberish>,
+    deadline: PromiseOrValue<BigNumberish>,
+    v: PromiseOrValue<BigNumberish>,
+    r: PromiseOrValue<BytesLike>,
+    s: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -185,7 +207,13 @@ export interface RelayOrderReactor extends BaseContract {
 
     permit(
       token: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -223,7 +251,13 @@ export interface RelayOrderReactor extends BaseContract {
 
     permit(
       token: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -246,7 +280,13 @@ export interface RelayOrderReactor extends BaseContract {
 
     permit(
       token: PromiseOrValue<string>,
-      data: PromiseOrValue<BytesLike>,
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

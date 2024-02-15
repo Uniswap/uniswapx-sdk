@@ -26,7 +26,6 @@ export type RelayFee = {
   readonly endAmount: BigNumber;
   readonly startTime: number;
   readonly endTime: number;
-  readonly recipient: string;
 };
 
 export type RelayInputJSON = Omit<RelayInput, "amount"> & {
@@ -66,7 +65,6 @@ type WitnessInfo = {
   feeStartAmount: BigNumber;
   feeStartTime: number;
   feeEndTime: number;
-  feeRecipient: string;
   actions: string;
 };
 
@@ -78,7 +76,6 @@ const RELAY_WITNESS_TYPES = {
     { name: "feeStartAmount", type: "uint256" },
     { name: "feeStartTime", type: "uint256" },
     { name: "feeEndTime", type: "uint256" },
-    { name: "feeRecipient", type: "address" },
     { name: "actions", type: "bytes" },
   ],
 };
@@ -88,7 +85,7 @@ const RELAY_ORDER_ABI = [
     [
       "tuple(address,address,uint256,uint256)",
       "tuple(address,uint256,address)",
-      "tuple(address,uint256,uint256,uint256,uint256,address)",
+      "tuple(address,uint256,uint256,uint256,uint256)",
       "bytes",
     ].join(",") +
     ")",
@@ -131,7 +128,6 @@ export class RelayOrder implements Order {
           endAmount: BigNumber.from(json.fee.endAmount),
           startTime: json.fee.startTime,
           endTime: json.fee.endTime,
-          recipient: json.fee.recipient,
         },
       },
       chainId,
@@ -146,14 +142,7 @@ export class RelayOrder implements Order {
       [
         [reactor, swapper, nonce, deadline],
         [inputToken, inputAmount, inputRecipient],
-        [
-          feeToken,
-          feeStartAmount,
-          feeEndAmount,
-          feeStartTime,
-          feeEndTime,
-          feeRecipient,
-        ],
+        [feeToken, feeStartAmount, feeEndAmount, feeStartTime, feeEndTime],
         actions,
       ],
     ] = decoded;
@@ -174,7 +163,6 @@ export class RelayOrder implements Order {
           endAmount: feeEndAmount,
           startTime: feeStartTime.toNumber(),
           endTime: feeEndTime.toNumber(),
-          recipient: feeRecipient,
         },
         actions: actions,
       },
@@ -206,7 +194,6 @@ export class RelayOrder implements Order {
         endAmount: this.info.fee.endAmount.toString(),
         startTime: this.info.fee.startTime,
         endTime: this.info.fee.endTime,
-        recipient: this.info.fee.recipient,
       },
     };
   }
@@ -232,7 +219,6 @@ export class RelayOrder implements Order {
           this.info.fee.endAmount,
           this.info.fee.startTime,
           this.info.fee.endTime,
-          this.info.fee.recipient,
         ],
         this.info.actions,
       ],
@@ -294,7 +280,6 @@ export class RelayOrder implements Order {
           },
           options.timestamp
         ),
-        recipient: this.info.fee.recipient,
       },
     };
   }
@@ -325,7 +310,6 @@ export class RelayOrder implements Order {
       feeStartAmount: this.info.fee.startAmount,
       feeStartTime: this.info.fee.startTime,
       feeEndTime: this.info.fee.endTime,
-      feeRecipient: this.info.fee.recipient,
       actions: this.info.actions,
     };
   }

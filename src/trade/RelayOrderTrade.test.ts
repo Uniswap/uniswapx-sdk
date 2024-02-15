@@ -116,7 +116,6 @@ describe("RelayOrderTrade", () => {
         endAmount: FEE_END_AMOUNT,
         startTime: feeStartTime,
         endTime: feeEndTime,
-        recipient: ethers.constants.AddressZero,
       },
       input: {
         token: DAI.address,

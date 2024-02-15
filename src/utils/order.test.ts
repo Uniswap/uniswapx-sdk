@@ -87,7 +87,6 @@ describe("order utils", () => {
         endAmount: BigNumber.from("1000000"),
         startTime: deadline - 100,
         endTime: deadline,
-        recipient: "0x0000000000000000000000000000000000000000",
       })
       .build();
   });

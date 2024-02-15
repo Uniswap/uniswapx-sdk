@@ -24,7 +24,6 @@ describe("RelayOrderBuilder", () => {
       endAmount: BigNumber.from("1000000"),
       startTime: deadline - 100,
       endTime: deadline,
-      recipient: "0x0000000000000000000000000000000000000000",
     };
   };
 
@@ -126,7 +125,6 @@ describe("RelayOrderBuilder", () => {
           endAmount: BigNumber.from("99"),
           startTime: deadline - 100,
           endTime: deadline,
-          recipient: "0x0000000000000000000000000000000000000000",
         })
         .actions("0x")
         .build()
@@ -148,7 +146,6 @@ describe("RelayOrderBuilder", () => {
           endAmount: BigNumber.from("1000000"),
           startTime: expiredDeadline - 100,
           endTime: expiredDeadline,
-          recipient: "0x0000000000000000000000000000000000000000",
         })
         .actions("0x")
         .build()
@@ -169,7 +166,6 @@ describe("RelayOrderBuilder", () => {
         endAmount: BigNumber.from("1200000"),
         startTime: deadline + 1,
         endTime: deadline + 1,
-        recipient: "0x0000000000000000000000000000000000000000",
       });
 
     expect(() => order.build()).toThrow(
