@@ -4,7 +4,7 @@ import { DutchOrderBuilder, RelayOrderBuilder } from "../builder";
 import { OrderType } from "../constants";
 import { DutchOrder, RelayOrder } from "../order";
 
-import { getOrderType, getOrderTypeFromEncoded, parseOrder } from "./order";
+import { RelayOrderParser, UniswapXOrderParser } from "./order";
 
 describe("order utils", () => {
   let dutchOrder: DutchOrder;
@@ -12,6 +12,9 @@ describe("order utils", () => {
   let limitOrder: DutchOrder;
   let relayOrder: RelayOrder;
   let chainId: number;
+
+  const uniswapXOrderParser = new UniswapXOrderParser();
+  const relayOrderParser = new RelayOrderParser();
 
   beforeEach(() => {
     chainId = 1;
@@ -94,7 +97,10 @@ describe("order utils", () => {
   describe("parseOrder", () => {
     it("parses DutchOrder with single output", () => {
       const encodedOrder = dutchOrder.serialize();
-      expect(parseOrder(encodedOrder, chainId)).toEqual(dutchOrder);
+      console.log("encodedDutchOrder", encodedOrder);
+      expect(uniswapXOrderParser.parseOrder(encodedOrder, chainId)).toEqual(
+        dutchOrder
+      );
     });
 
     it("parses DutchOrder with multiple outputs", () => {
@@ -105,57 +111,84 @@ describe("order utils", () => {
         recipient: "0x0000000000000000000000000000000000000123",
       });
       const encodedOrder = dutchOrder.serialize();
-      expect(parseOrder(encodedOrder, chainId)).toEqual(dutchOrder);
+      expect(uniswapXOrderParser.parseOrder(encodedOrder, chainId)).toEqual(
+        dutchOrder
+      );
     });
 
     it("parses RelayOrder", () => {
       const encodedOrder = relayOrder.serialize();
-      expect(parseOrder(encodedOrder, chainId)).toEqual(relayOrder);
+      console.log("encodedRelayOrder", encodedOrder);
+      expect(relayOrderParser.parseOrder(encodedOrder, chainId)).toEqual(
+        relayOrder
+      );
     });
 
     it("parses RelayOrder with universalRouterCalldata", () => {
       relayOrder.info.universalRouterCalldata =
         "0x0000000000000000000000000000000000000123";
       const encodedOrder = relayOrder.serialize();
-      expect(parseOrder(encodedOrder, chainId)).toEqual(relayOrder);
+      expect(relayOrderParser.parseOrder(encodedOrder, chainId)).toEqual(
+        relayOrder
+      );
     });
   });
 
   describe("getOrderType", () => {
     it("parses DutchOrder type", () => {
-      expect(getOrderType(dutchOrder)).toEqual(OrderType.Dutch);
+      expect(uniswapXOrderParser.getOrderType(dutchOrder)).toEqual(
+        OrderType.Dutch
+      );
     });
     it("parses DutchOrder exact out type", () => {
-      expect(getOrderType(dutchOrderExactOut)).toEqual(OrderType.Dutch);
+      expect(uniswapXOrderParser.getOrderType(dutchOrderExactOut)).toEqual(
+        OrderType.Dutch
+      );
     });
     it("parses LimitOrder type", () => {
-      expect(getOrderType(limitOrder)).toEqual(OrderType.Limit);
+      expect(uniswapXOrderParser.getOrderType(limitOrder)).toEqual(
+        OrderType.Limit
+      );
     });
     it("parses RelayOrder type", () => {
-      expect(getOrderType(relayOrder)).toEqual(OrderType.Relay);
+      expect(relayOrderParser.getOrderType(relayOrder)).toEqual(
+        OrderType.Relay
+      );
     });
   });
 
   describe("getOrderTypeFromEncoded", () => {
     it("parses DutchOrder type", () => {
-      expect(getOrderTypeFromEncoded(dutchOrder.serialize(), chainId)).toEqual(
-        OrderType.Dutch
-      );
+      expect(
+        uniswapXOrderParser.getOrderTypeFromEncoded(
+          dutchOrder.serialize(),
+          chainId
+        )
+      ).toEqual(OrderType.Dutch);
     });
     it("parses DutchOrder exact out type", () => {
       expect(
-        getOrderTypeFromEncoded(dutchOrderExactOut.serialize(), chainId)
+        uniswapXOrderParser.getOrderTypeFromEncoded(
+          dutchOrderExactOut.serialize(),
+          chainId
+        )
       ).toEqual(OrderType.Dutch);
     });
     it("parses LimitOrder type", () => {
-      expect(getOrderTypeFromEncoded(limitOrder.serialize(), chainId)).toEqual(
-        OrderType.Limit
-      );
+      expect(
+        uniswapXOrderParser.getOrderTypeFromEncoded(
+          limitOrder.serialize(),
+          chainId
+        )
+      ).toEqual(OrderType.Limit);
     });
     it("parses RelayOrder type", () => {
-      expect(getOrderTypeFromEncoded(relayOrder.serialize(), chainId)).toEqual(
-        OrderType.Relay
-      );
+      expect(
+        relayOrderParser.getOrderTypeFromEncoded(
+          relayOrder.serialize(),
+          chainId
+        )
+      ).toEqual(OrderType.Relay);
     });
   });
 });
