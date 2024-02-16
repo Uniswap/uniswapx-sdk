@@ -108,30 +108,17 @@ describe("order utils", () => {
       expect(parseOrder(encodedOrder, chainId)).toEqual(dutchOrder);
     });
 
-    // TODO: fix after quoter is done
-    relayOrder;
+    it("parses RelayOrder", () => {
+      const encodedOrder = relayOrder.serialize();
+      expect(parseOrder(encodedOrder, chainId)).toEqual(relayOrder);
+    });
 
-    // it('parses RelayOrder', () => {
-    //   const encodedOrder = relayOrder.serialize();
-    //   expect(parseOrder(encodedOrder, chainId)).toEqual(relayOrder);
-    // })
-
-    // it('parses RelayOrder with universalRouterCalldata', () => {
-    //   relayOrder.info.universalRouterCalldata.push("0x0000000000000000000000000000000000000123");
-    //   const encodedOrder = relayOrder.serialize();
-    //   expect(parseOrder(encodedOrder, chainId)).toEqual(relayOrder);
-    // })
-
-    // it('parses RelayOrder with multiple inputs', () => {
-    //   relayOrder.info.inputs.push({
-    //     token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-    //     startAmount: BigNumber.from("100"),
-    //     maxAmount: BigNumber.from("100"),
-    //     recipient: "0x0000000000000000000000000000000000000001"
-    //   });
-    //   const encodedOrder = relayOrder.serialize();
-    //   expect(parseOrder(encodedOrder, chainId)).toEqual(relayOrder);
-    // })
+    it("parses RelayOrder with universalRouterCalldata", () => {
+      relayOrder.info.universalRouterCalldata =
+        "0x0000000000000000000000000000000000000123";
+      const encodedOrder = relayOrder.serialize();
+      expect(parseOrder(encodedOrder, chainId)).toEqual(relayOrder);
+    });
   });
 
   describe("getOrderType", () => {
@@ -144,9 +131,9 @@ describe("order utils", () => {
     it("parses LimitOrder type", () => {
       expect(getOrderType(limitOrder)).toEqual(OrderType.Limit);
     });
-    // it("parses RelayOrder type", () => {
-    //   expect(getOrderType(relayOrder)).toEqual(OrderType.Relay);
-    // });
+    it("parses RelayOrder type", () => {
+      expect(getOrderType(relayOrder)).toEqual(OrderType.Relay);
+    });
   });
 
   describe("getOrderTypeFromEncoded", () => {
@@ -165,10 +152,10 @@ describe("order utils", () => {
         OrderType.Limit
       );
     });
-    // it("parses RelayOrder type", () => {
-    //   expect(getOrderTypeFromEncoded(relayOrder.serialize(), chainId)).toEqual(
-    //     OrderType.Relay
-    //   );
-    // });
+    it("parses RelayOrder type", () => {
+      expect(getOrderTypeFromEncoded(relayOrder.serialize(), chainId)).toEqual(
+        OrderType.Relay
+      );
+    });
   });
 });
