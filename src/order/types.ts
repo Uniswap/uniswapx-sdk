@@ -10,7 +10,7 @@ import { ResolvedOrder } from "../utils/OrderQuoter";
 import { CustomOrderValidation, parseValidation } from "./validation";
 
 // General interface implemented by off chain orders
-export interface Order {
+export interface OffChainOrder {
   /**
    * Returns the abi encoded order
    * @return The abi encoded serialized order which can be submitted on-chain
@@ -35,7 +35,7 @@ export interface Order {
 }
 
 // Base class for a UniswapX order
-export abstract class UniswapXOrder implements Order {
+export abstract class UniswapXOrder implements OffChainOrder {
   abstract info: OrderInfo;
 
   abstract chainId: number;

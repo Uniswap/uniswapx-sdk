@@ -12,7 +12,7 @@ import { MissingConfiguration } from "../errors";
 import { ResolvedRelayOrder } from "../utils/OrderQuoter";
 import { getDecayedAmount } from "../utils/dutchDecay";
 
-import { Order, OrderInfo, OrderResolutionOptions } from "./types";
+import { OffChainOrder, OrderInfo, OrderResolutionOptions } from "./types";
 
 export type RelayInput = {
   readonly token: string;
@@ -91,7 +91,7 @@ const RELAY_ORDER_ABI = [
     ")",
 ];
 
-export class RelayOrder implements Order {
+export class RelayOrder implements OffChainOrder {
   public permit2Address: string;
 
   constructor(

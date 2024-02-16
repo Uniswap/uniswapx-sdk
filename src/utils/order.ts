@@ -1,6 +1,6 @@
 import { OrderType, REVERSE_REACTOR_MAPPING } from "../constants";
 import { MissingConfiguration } from "../errors";
-import { DutchOrder, UniswapXOrder } from "../order";
+import { DutchOrder, Order } from "../order";
 
 import { stripHexPrefix } from ".";
 
@@ -11,7 +11,7 @@ const ADDRESS_LENGTH = 40;
  * Parses a given serialized order
  * @return Parsed order object
  */
-export function parseOrder(order: string, chainId: number): UniswapXOrder {
+export function parseOrder(order: string, chainId: number): Order {
   // reactor address is always the first field in order
   const reactor =
     "0x" +
@@ -48,7 +48,7 @@ export function getOrderTypeFromEncoded(
  * Determines the OrderType from an Order object
  * @return OrderType
  */
-export function getOrderType(order: UniswapXOrder): OrderType {
+export function getOrderType(order: Order): OrderType {
   const { orderType } =
     REVERSE_REACTOR_MAPPING[order.info.reactor.toLowerCase()];
 
