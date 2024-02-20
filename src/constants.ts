@@ -1,10 +1,3 @@
-export enum OrderType {
-  Dutch = "Dutch",
-  Relay = "Relay",
-  Dutch_V2 = "Dutch_V2",
-  Limit = "Limit",
-}
-
 export const PERMIT2_MAPPING: { readonly [key: number]: string } = {
   1: "0x000000000022d473030f116ddee9f6b43ac78ba3",
   5: "0x000000000022d473030f116ddee9f6b43ac78ba3",
@@ -19,14 +12,6 @@ export const ORDER_QUOTER_MAPPING: { readonly [key: number]: string } = {
   12341234: "0xbea0901A41177811b099F787D753436b2c47690E",
 };
 
-export const OFFCHAIN_ORDER_VALIDATOR_MAPPING: {
-  readonly [key: number]: Reactors;
-} = {
-  1: {
-    [OrderType.Relay]: "0x0000000000000000000000000000000000000000",
-  },
-};
-
 export const EXCLUSIVE_FILLER_VALIDATION_MAPPING: {
   readonly [key: number]: string;
 } = {
@@ -37,6 +22,13 @@ export const EXCLUSIVE_FILLER_VALIDATION_MAPPING: {
 
 export enum KNOWN_EVENT_SIGNATURES {
   ERC20_TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+}
+
+export enum OrderType {
+  Dutch = "Dutch",
+  Relay = "Relay",
+  Dutch_V2 = "Dutch_V2",
+  Limit = "Limit",
 }
 
 type Reactors = Partial<{
