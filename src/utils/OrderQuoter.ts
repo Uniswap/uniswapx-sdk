@@ -1,14 +1,26 @@
 import { BaseProvider } from "@ethersproject/providers";
-import { ethers } from "ethers";
+import { Contract, ethers } from "ethers";
 
-import { ORDER_QUOTER_MAPPING } from "../constants";
 import {
-  ExclusiveDutchOrderReactor__factory,
+  ORDER_QUOTER_MAPPING,
+  OrderType,
+  PERMIT2_MAPPING,
+  REACTOR_ADDRESS_MAPPING,
+} from "../constants";
+import {
   OrderQuoter__factory,
   OrderQuoter as OrderQuoterContract,
+  RelayOrderReactor,
+  RelayOrderReactor__factory,
 } from "../contracts";
 import { MissingConfiguration } from "../errors";
-import { ResolvedRelayFee, TokenAmount, UniswapXOrder } from "../order";
+import {
+  OffChainOrder,
+  RelayOrder,
+  ResolvedRelayFee,
+  TokenAmount,
+  UniswapXOrder,
+} from "../order";
 import { parseExclusiveFillerData, ValidationType } from "../order/validation";
 
 import { NonceManager } from "./NonceManager";
@@ -29,21 +41,25 @@ export enum OrderValidation {
   OK,
 }
 
-export type ResolvedOrder = ResolvedDutchOrder;
-
-export interface ResolvedDutchOrder {
+export interface ResolvedUniswapXOrder {
   input: TokenAmount;
   outputs: TokenAmount[];
+}
+
+export interface UniswapXOrderQuote {
+  validation: OrderValidation;
+  // not specified if validation is not OK
+  quote: ResolvedUniswapXOrder | undefined;
 }
 
 export interface ResolvedRelayOrder {
   fee: ResolvedRelayFee;
 }
 
-export interface OrderQuote {
+export interface RelayOrderQuote {
   validation: OrderValidation;
   // not specified if validation is not OK
-  quote: ResolvedDutchOrder | undefined;
+  quote: ResolvedRelayOrder | undefined;
 }
 
 const BASIC_ERROR = "0x08c379a0";
@@ -74,64 +90,123 @@ const KNOWN_ERRORS: { [key: string]: OrderValidation } = {
   TRANSFER_FROM_FAILED: OrderValidation.InsufficientFunds,
 };
 
-export interface SignedOrder {
+export interface SignedUniswapXOrder {
   order: UniswapXOrder;
   signature: string;
 }
 
-/**
- * Order quoter
- */
-export class OrderQuoter {
-  private orderQuoter: OrderQuoterContract;
+export interface SignedRelayOrder {
+  order: RelayOrder;
+  signature: string;
+}
 
-  constructor(
-    private provider: BaseProvider,
-    private chainId: number,
-    orderQuoterAddress?: string
-  ) {
-    if (orderQuoterAddress) {
-      this.orderQuoter = OrderQuoter__factory.connect(
-        orderQuoterAddress,
-        provider
-      );
-    } else if (ORDER_QUOTER_MAPPING[chainId]) {
-      this.orderQuoter = OrderQuoter__factory.connect(
-        ORDER_QUOTER_MAPPING[chainId],
-        this.provider
-      );
-    } else {
-      throw new MissingConfiguration("orderQuoter", chainId.toString());
-    }
+export interface OffchainSignedOrder {
+  order: OffChainOrder;
+  signature: string;
+}
+
+export abstract class OrderQuoter {
+  protected abstract provider: BaseProvider;
+  protected abstract chainId: number;
+  protected abstract quoter: Contract;
+
+  // Offchain orders have one quirk
+  // all reactors check expiry before anything else, so old but already filled orders will return as expired
+  // so this function takes orders in expired state and double checks them
+  protected async checkTerminalStates(
+    orders: (SignedUniswapXOrder | SignedRelayOrder)[],
+    validations: OrderValidation[]
+  ): Promise<OrderValidation[]> {
+    return await Promise.all(
+      validations.map(async (validation, i) => {
+        const order = orders[i];
+        if (
+          validation === OrderValidation.Expired ||
+          order.order.info.deadline < Math.floor(new Date().getTime() / 1000)
+        ) {
+          const nonceManager = new NonceManager(
+            this.provider,
+            this.chainId,
+            PERMIT2_MAPPING[this.chainId]
+          );
+          const maker = order.order.getSigner(order.signature);
+          const cancelled = await nonceManager.isUsed(
+            maker,
+            order.order.info.nonce
+          );
+          return cancelled
+            ? OrderValidation.NonceUsed
+            : OrderValidation.Expired;
+        } else {
+          return validation;
+        }
+      })
+    );
   }
 
-  async quote(order: SignedOrder): Promise<OrderQuote> {
-    return (await this.quoteBatch([order]))[0];
-  }
-
-  async quoteBatch(orders: SignedOrder[]): Promise<OrderQuote[]> {
+  protected async getMulticallResults(
+    functionName: string,
+    orders: OffchainSignedOrder[]
+  ): Promise<MulticallResult[]> {
     const calls = orders.map((order) => {
       return [order.order.serialize(), order.signature];
     });
 
-    const results = await multicallSameContractManyFunctions(this.provider, {
-      address: this.orderQuoter.address,
-      contractInterface: this.orderQuoter.interface,
-      functionName: "quote",
+    return await multicallSameContractManyFunctions(this.provider, {
+      address: this.quoter.address,
+      contractInterface: this.quoter.interface,
+      functionName: functionName,
       functionParams: calls,
     });
+  }
 
+  get quoterAddress(): string {
+    return this.quoter.address;
+  }
+}
+
+/**
+ * UniswapX order quoter
+ */
+export class UniswapXOrderQuoter extends OrderQuoter {
+  protected quoter: OrderQuoterContract;
+
+  constructor(
+    protected provider: BaseProvider,
+    protected chainId: number,
+    orderQuoterAddress?: string
+  ) {
+    super();
+    if (orderQuoterAddress) {
+      this.quoter = OrderQuoter__factory.connect(orderQuoterAddress, provider);
+    } else if (ORDER_QUOTER_MAPPING[chainId]) {
+      this.quoter = OrderQuoter__factory.connect(
+        ORDER_QUOTER_MAPPING[chainId],
+        this.provider
+      );
+    } else {
+      throw new MissingConfiguration("quoter", chainId.toString());
+    }
+  }
+
+  async quote(order: SignedUniswapXOrder): Promise<UniswapXOrderQuote> {
+    return (await this.quoteBatch([order]))[0];
+  }
+
+  async quoteBatch(
+    orders: SignedUniswapXOrder[]
+  ): Promise<UniswapXOrderQuote[]> {
+    const results = await this.getMulticallResults("quote", orders);
     const validations = await this.getValidations(orders, results);
-    const quotes: (ResolvedDutchOrder | undefined)[] = results.map(
+
+    const quotes: (ResolvedUniswapXOrder | undefined)[] = results.map(
       ({ success, returnData }) => {
         if (!success) {
           return undefined;
         }
 
-        return this.orderQuoter.interface.decodeFunctionResult(
-          "quote",
-          returnData
-        ).result;
+        return this.quoter.interface.decodeFunctionResult("quote", returnData)
+          .result;
       }
     );
 
@@ -144,7 +219,7 @@ export class OrderQuoter {
   }
 
   private async getValidations(
-    orders: SignedOrder[],
+    orders: SignedUniswapXOrder[],
     results: MulticallResult[]
   ): Promise<OrderValidation[]> {
     const validations = results.map((result, idx) => {
@@ -184,48 +259,92 @@ export class OrderQuoter {
 
     return await this.checkTerminalStates(orders, validations);
   }
+}
 
-  // The quoter contract has a quirk that make validations inaccurate:
-  // - checks expiry before anything else, so old but already filled orders will return as expired
-  // so this function takes orders in expired state and double checks them
-  private async checkTerminalStates(
-    orders: SignedOrder[],
-    validations: OrderValidation[]
-  ): Promise<OrderValidation[]> {
-    return await Promise.all(
-      validations.map(async (validation, i) => {
-        const order = orders[i];
-        if (
-          validation === OrderValidation.Expired ||
-          order.order.info.deadline < Math.floor(new Date().getTime() / 1000)
-        ) {
-          // all reactors have the same interface, we just use limitorder to implement the interface
-          const reactor = ExclusiveDutchOrderReactor__factory.connect(
-            order.order.info.reactor,
-            this.provider
-          );
+/**
+ * Relay order quoter
+ */
+export class RelayOrderQuoter extends OrderQuoter {
+  protected quoter: RelayOrderReactor;
 
-          const nonceManager = new NonceManager(
-            this.provider,
-            this.chainId,
-            await reactor.permit2()
-          );
-          const maker = order.order.getSigner(order.signature);
-          const cancelled = await nonceManager.isUsed(
-            maker,
-            order.order.info.nonce
-          );
-          return cancelled
-            ? OrderValidation.NonceUsed
-            : OrderValidation.Expired;
-        } else {
-          return validation;
-        }
-      })
-    );
+  constructor(
+    protected provider: BaseProvider,
+    protected chainId: number,
+    reactorAddress?: string
+  ) {
+    super();
+    if (reactorAddress) {
+      this.quoter = RelayOrderReactor__factory.connect(
+        reactorAddress,
+        provider
+      );
+    } else if (REACTOR_ADDRESS_MAPPING[chainId][OrderType.Relay]) {
+      this.quoter = RelayOrderReactor__factory.connect(
+        REACTOR_ADDRESS_MAPPING[chainId][OrderType.Relay]!,
+        this.provider
+      );
+    } else {
+      throw new MissingConfiguration("quoter", chainId.toString());
+    }
   }
 
-  get orderQuoterAddress(): string {
-    return this.orderQuoter.address;
+  async quote(order: SignedRelayOrder): Promise<RelayOrderQuote> {
+    return (await this.quoteBatch([order]))[0];
+  }
+
+  async quoteBatch(orders: SignedRelayOrder[]): Promise<RelayOrderQuote[]> {
+    const results = await this.getMulticallResults("execute", orders);
+    const validations = await this.getValidations(orders, results);
+
+    const quotes: (ResolvedRelayOrder | undefined)[] = results.map(
+      // no return data
+      ({ success }, idx) => {
+        if (!success) {
+          return undefined;
+        }
+
+        // TODO:
+        return orders[idx].order.resolve({
+          timestamp: Math.floor(new Date().getTime() / 1000),
+        });
+      }
+    );
+
+    return validations.map((validation, i) => {
+      return {
+        validation,
+        quote: quotes[i],
+      };
+    });
+  }
+
+  private async getValidations(
+    orders: SignedRelayOrder[],
+    results: MulticallResult[]
+  ): Promise<OrderValidation[]> {
+    const validations = results.map((result) => {
+      if (result.success) {
+        return OrderValidation.OK;
+      } else {
+        let returnData = result.returnData;
+
+        // Parse traditional string error messages
+        if (returnData.startsWith(BASIC_ERROR)) {
+          returnData = new ethers.utils.AbiCoder().decode(
+            ["string"],
+            "0x" + returnData.slice(10)
+          )[0];
+        }
+
+        for (const key of Object.keys(KNOWN_ERRORS)) {
+          if (returnData.includes(key)) {
+            return KNOWN_ERRORS[key];
+          }
+        }
+        return OrderValidation.UnknownError;
+      }
+    });
+
+    return await this.checkTerminalStates(orders, validations);
   }
 }

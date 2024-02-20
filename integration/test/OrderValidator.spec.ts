@@ -19,7 +19,7 @@ import {
   DutchOrderBuilder,
   DutchOrder,
   OrderValidator,
-  OrderQuoter as OrderQuoterLib,
+  UniswapXOrderQuoter as OrderQuoterLib,
   OrderValidation,
   getCancelSingleParams,
 } from "../../";

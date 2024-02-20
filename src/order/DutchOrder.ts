@@ -10,7 +10,7 @@ import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 
 import { BPS, PERMIT2_MAPPING } from "../constants";
 import { MissingConfiguration } from "../errors";
-import { ResolvedDutchOrder } from "../utils/OrderQuoter";
+import { ResolvedUniswapXOrder } from "../utils/OrderQuoter";
 import { getDecayedAmount } from "../utils/dutchDecay";
 
 import {
@@ -313,7 +313,7 @@ export class DutchOrder extends UniswapXOrder {
   /**
    * @inheritdoc Order
    */
-  resolve(options: OrderResolutionOptions): ResolvedDutchOrder {
+  resolve(options: OrderResolutionOptions): ResolvedUniswapXOrder {
     const useOverride =
       this.info.exclusiveFiller !== ethers.constants.AddressZero &&
       options.timestamp <= this.info.decayStartTime &&

@@ -10,7 +10,7 @@ import invariant from "tiny-invariant";
 
 import { PERMIT2_MAPPING } from "../constants";
 import { MissingConfiguration } from "../errors";
-import { ResolvedOrder } from "../utils/OrderQuoter";
+import { ResolvedUniswapXOrder } from "../utils/OrderQuoter";
 import { getDecayedAmount } from "../utils/dutchDecay";
 
 import {
@@ -407,7 +407,7 @@ export class V2DutchOrder extends V2Order {
   /**
    * @inheritdoc Order
    */
-  resolve(options: OrderResolutionOptions): ResolvedOrder {
+  resolve(options: OrderResolutionOptions): ResolvedUniswapXOrder {
     invariant(this.info.cosignerData, "cosignerData is required");
     return {
       input: {

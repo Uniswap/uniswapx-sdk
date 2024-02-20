@@ -5,7 +5,7 @@ import {
 } from "@uniswap/permit2-sdk";
 import { BigNumber } from "ethers";
 
-import { ResolvedOrder } from "../utils/OrderQuoter";
+import { ResolvedUniswapXOrder } from "../utils/OrderQuoter";
 
 import { CustomOrderValidation, parseValidation } from "./validation";
 
@@ -60,7 +60,7 @@ export abstract class UniswapXOrder implements OffChainOrder {
    * Returns the resolved order with the given options
    * @return The resolved order
    */
-  abstract resolve(options: OrderResolutionOptions): ResolvedOrder;
+  abstract resolve(options: OrderResolutionOptions): ResolvedUniswapXOrder;
 }
 
 export abstract class V2Order extends UniswapXOrder {
