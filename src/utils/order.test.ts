@@ -97,7 +97,6 @@ describe("order utils", () => {
   describe("parseOrder", () => {
     it("parses DutchOrder with single output", () => {
       const encodedOrder = dutchOrder.serialize();
-      console.log("encodedDutchOrder", encodedOrder);
       expect(uniswapXOrderParser.parseOrder(encodedOrder, chainId)).toEqual(
         dutchOrder
       );
@@ -118,7 +117,6 @@ describe("order utils", () => {
 
     it("parses RelayOrder", () => {
       const encodedOrder = relayOrder.serialize();
-      console.log("encodedRelayOrder", encodedOrder);
       expect(relayOrderParser.parseOrder(encodedOrder, chainId)).toEqual(
         relayOrder
       );

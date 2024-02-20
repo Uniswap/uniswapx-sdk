@@ -32,18 +32,22 @@ abstract class OrderParser {
   }
 
   /**
+   * Determines the OrderType from an Order object
+   * @return OrderType
+   */
+  getOrderType(order: Order): OrderType {
+    const { orderType } =
+      REVERSE_REACTOR_MAPPING[order.info.reactor.toLowerCase()];
+    return orderType;
+  }
+
+  /**
    * Helper function to determine the OrderType from a serialized order
    */
   getOrderTypeFromEncoded(order: string, chainId: number): OrderType {
     const parsedOrder = this.parseOrder(order, chainId);
     return this.getOrderType(parsedOrder);
   }
-
-  /**
-   * Determines the OrderType from an Order object
-   * @return OrderType
-   */
-  abstract getOrderType(order: Order): OrderType;
 }
 
 export class UniswapXOrderParser extends OrderParser {
@@ -94,15 +98,5 @@ export class RelayOrderParser extends OrderParser {
    */
   parseOrder(order: string, chainId: number): Order {
     return RelayOrder.parse(order, chainId);
-  }
-
-  /**
-   * Determine the order type of a Relay order
-   * @dev no additional logic required 
-   */
-  getOrderType(order: Order): OrderType {
-    const { orderType } =
-      REVERSE_REACTOR_MAPPING[order.info.reactor.toLowerCase()];
-    return orderType;
   }
 }
