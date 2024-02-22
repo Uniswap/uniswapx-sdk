@@ -135,7 +135,7 @@ export class V2DutchOrder extends V2Order {
     chainId: number,
     _permit2Address?: string
   ): V2DutchOrder {
-    const defaultCosignerData = cosignerDataOrDefault(json.cosignerData);
+    const defaultCosignerData = cosignerDataJSONOrDefault(json.cosignerData);
     const cosignerData = json.cosignerData
       ? {
           ...json.cosignerData,
@@ -293,7 +293,7 @@ export class V2DutchOrder extends V2Order {
    * @inheritdoc order
    */
   serialize(): string {
-    invariant(this.info.cosignerData, "cosignerData is required");
+    const cosignerData = cosignerDataOrDefault(this.info.cosignerData);
     const abiCoder = new ethers.utils.AbiCoder();
     return abiCoder.encode(V2_DUTCH_ORDER_ABI, [
       [
@@ -318,13 +318,13 @@ export class V2DutchOrder extends V2Order {
           output.recipient,
         ]),
         [
-          this.info.cosignerData.decayStartTime,
-          this.info.cosignerData.decayEndTime,
-          this.info.cosignerData.exclusiveFiller,
-          this.info.cosignerData.inputOverride,
-          this.info.cosignerData.outputOverrides,
+          cosignerData.decayStartTime,
+          cosignerData.decayEndTime,
+          cosignerData.exclusiveFiller,
+          cosignerData.inputOverride,
+          cosignerData.outputOverrides,
         ],
-        this.info.cosignature,
+        this.info.cosignature || "0x",
       ],
     ]);
   }
@@ -521,7 +521,7 @@ function originalIfZero(value: BigNumber, original: BigNumber): BigNumber {
   return value.isZero() ? original : value;
 }
 
-function cosignerDataOrDefault(
+function cosignerDataJSONOrDefault(
   data: CosignerDataJSON | undefined
 ): CosignerDataJSON {
   if (data == undefined) {
@@ -531,6 +531,19 @@ function cosignerDataOrDefault(
       exclusiveFiller: ethers.constants.AddressZero,
       inputOverride: "0",
       outputOverrides: ["0"],
+    };
+  }
+  return data;
+}
+
+function cosignerDataOrDefault(data: CosignerData | undefined): CosignerData {
+  if (data == undefined) {
+    return {
+      decayStartTime: 0,
+      decayEndTime: 0,
+      exclusiveFiller: ethers.constants.AddressZero,
+      inputOverride: BigNumber.from("0"),
+      outputOverrides: [BigNumber.from("0")],
     };
   }
   return data;

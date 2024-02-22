@@ -90,6 +90,13 @@ describe("V2DutchOrder", () => {
     expect(parsed.info).toEqual(orderInfo);
   });
 
+  it("serializes an unsigned order", () => {
+    const orderInfo = getOrderInfo({});
+    const order = new V2DutchOrder(orderInfo, 1);
+    const serialized = order.serialize();
+    V2DutchOrder.parse(serialized, 1);
+  });
+
   it("parses the inner v2 order with no cosignerOverrides", () => {
     const orderInfoJSON = {
       ...getOrderInfo({}),
