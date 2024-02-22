@@ -105,70 +105,65 @@ export interface OffchainSignedOrder {
   signature: string;
 }
 
-export abstract class OrderQuoter {
-  protected abstract provider: BaseProvider;
-  protected abstract chainId: number;
-  protected abstract quoter: Contract;
+interface OrderQuoter<TOrder, TQuote> {
+  quote(order: TOrder): Promise<TQuote>;
+  quoteBatch(orders: TOrder[]): Promise<TQuote[]>;
+  orderQuoterAddress: string;
+}
 
-  // Offchain orders have one quirk
-  // all reactors check expiry before anything else, so old but already filled orders will return as expired
-  // so this function takes orders in expired state and double checks them
-  protected async checkTerminalStates(
-    orders: (SignedUniswapXOrder | SignedRelayOrder)[],
-    validations: OrderValidation[]
-  ): Promise<OrderValidation[]> {
-    return await Promise.all(
-      validations.map(async (validation, i) => {
-        const order = orders[i];
-        if (
-          validation === OrderValidation.Expired ||
-          order.order.info.deadline < Math.floor(new Date().getTime() / 1000)
-        ) {
-          const nonceManager = new NonceManager(
-            this.provider,
-            this.chainId,
-            PERMIT2_MAPPING[this.chainId]
-          );
-          const maker = order.order.getSigner(order.signature);
-          const cancelled = await nonceManager.isUsed(
-            maker,
-            order.order.info.nonce
-          );
-          return cancelled
-            ? OrderValidation.NonceUsed
-            : OrderValidation.Expired;
-        } else {
-          return validation;
-        }
-      })
-    );
-  }
+// Offchain orders have one quirk
+// all reactors check expiry before anything else, so old but already filled orders will return as expired
+// so this function takes orders in expired state and double checks them
+async function checkTerminalStates(
+  nonceManager: NonceManager,
+  orders: (SignedUniswapXOrder | SignedRelayOrder)[],
+  validations: OrderValidation[]
+): Promise<OrderValidation[]> {
+  return await Promise.all(
+    validations.map(async (validation, i) => {
+      const order = orders[i];
+      if (
+        validation === OrderValidation.Expired ||
+        order.order.info.deadline < Math.floor(new Date().getTime() / 1000)
+      ) {
+        const maker = order.order.getSigner(order.signature);
+        const cancelled = await nonceManager.isUsed(
+          maker,
+          order.order.info.nonce
+        );
+        return cancelled ? OrderValidation.NonceUsed : OrderValidation.Expired;
+      } else {
+        return validation;
+      }
+    })
+  );
+}
 
-  protected async getMulticallResults(
-    functionName: string,
-    orders: OffchainSignedOrder[]
-  ): Promise<MulticallResult[]> {
-    const calls = orders.map((order) => {
-      return [order.order.serialize(), order.signature];
-    });
+/// Get the results of a multicall for a given function
+async function getMulticallResults(
+  provider: BaseProvider,
+  quoter: Contract,
+  functionName: string,
+  orders: OffchainSignedOrder[]
+): Promise<MulticallResult[]> {
+  const calls = orders.map((order) => {
+    return [order.order.serialize(), order.signature];
+  });
 
-    return await multicallSameContractManyFunctions(this.provider, {
-      address: this.quoter.address,
-      contractInterface: this.quoter.interface,
-      functionName: functionName,
-      functionParams: calls,
-    });
-  }
-
-  get quoterAddress(): string {
-    return this.quoter.address;
-  }
+  return await multicallSameContractManyFunctions(provider, {
+    address: quoter.address,
+    contractInterface: quoter.interface,
+    functionName: functionName,
+    functionParams: calls,
+  });
 }
 
 /**
  * UniswapX order quoter
  */
-export class UniswapXOrderQuoter extends OrderQuoter {
+export class UniswapXOrderQuoter
+  implements OrderQuoter<SignedUniswapXOrder, UniswapXOrderQuote>
+{
   protected quoter: OrderQuoterContract;
 
   constructor(
@@ -176,7 +171,6 @@ export class UniswapXOrderQuoter extends OrderQuoter {
     protected chainId: number,
     orderQuoterAddress?: string
   ) {
-    super();
     if (orderQuoterAddress) {
       this.quoter = OrderQuoter__factory.connect(orderQuoterAddress, provider);
     } else if (ORDER_QUOTER_MAPPING[chainId]) {
@@ -196,7 +190,12 @@ export class UniswapXOrderQuoter extends OrderQuoter {
   async quoteBatch(
     orders: SignedUniswapXOrder[]
   ): Promise<UniswapXOrderQuote[]> {
-    const results = await this.getMulticallResults("quote", orders);
+    const results = await getMulticallResults(
+      this.provider,
+      this.quoter,
+      "quote",
+      orders
+    );
     const validations = await this.getValidations(orders, results);
 
     const quotes: (ResolvedUniswapXOrder | undefined)[] = results.map(
@@ -257,14 +256,28 @@ export class UniswapXOrderQuoter extends OrderQuoter {
       }
     });
 
-    return await this.checkTerminalStates(orders, validations);
+    return await checkTerminalStates(
+      new NonceManager(
+        this.provider,
+        this.chainId,
+        PERMIT2_MAPPING[this.chainId]
+      ),
+      orders,
+      validations
+    );
+  }
+
+  get orderQuoterAddress(): string {
+    return this.quoter.address;
   }
 }
 
 /**
  * Relay order quoter
  */
-export class RelayOrderQuoter extends OrderQuoter {
+export class RelayOrderQuoter
+  implements OrderQuoter<SignedRelayOrder, RelayOrderQuote>
+{
   protected quoter: RelayOrderReactor;
 
   constructor(
@@ -272,7 +285,6 @@ export class RelayOrderQuoter extends OrderQuoter {
     protected chainId: number,
     reactorAddress?: string
   ) {
-    super();
     if (reactorAddress) {
       this.quoter = RelayOrderReactor__factory.connect(
         reactorAddress,
@@ -293,7 +305,12 @@ export class RelayOrderQuoter extends OrderQuoter {
   }
 
   async quoteBatch(orders: SignedRelayOrder[]): Promise<RelayOrderQuote[]> {
-    const results = await this.getMulticallResults("execute", orders);
+    const results = await getMulticallResults(
+      this.provider,
+      this.quoter,
+      "execute",
+      orders
+    );
     const validations = await this.getValidations(orders, results);
 
     const quotes: (ResolvedRelayOrder | undefined)[] = results.map(
@@ -345,6 +362,18 @@ export class RelayOrderQuoter extends OrderQuoter {
       }
     });
 
-    return await this.checkTerminalStates(orders, validations);
+    return await checkTerminalStates(
+      new NonceManager(
+        this.provider,
+        this.chainId,
+        PERMIT2_MAPPING[this.chainId]
+      ),
+      orders,
+      validations
+    );
+  }
+
+  get orderQuoterAddress(): string {
+    return this.quoter.address;
   }
 }
