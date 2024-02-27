@@ -7,8 +7,8 @@ import {
 } from "@uniswap/permit2-sdk";
 import { BigNumber, ethers } from "ethers";
 
-import { ResolvedUniswapXOrder } from "../utils/OrderQuoter";
 import { getPermit2 } from "../utils";
+import { ResolvedUniswapXOrder } from "../utils/OrderQuoter";
 import { getDecayedAmount } from "../utils/dutchDecay";
 
 import {
