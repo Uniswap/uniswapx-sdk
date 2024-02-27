@@ -349,7 +349,7 @@ describe("V2DutchOrderBuilder", () => {
         .outputAmounts([OUTPUT_START_AMOUNT.mul(98).div(100)])
         .build()
     ).toThrow(
-      "Invariant failed: inputOverride not set or smaller than original input"
+      "Invariant failed: cosigner input not set or smaller than baseInput"
     );
   });
 
@@ -379,7 +379,7 @@ describe("V2DutchOrderBuilder", () => {
         .outputAmounts([OUTPUT_START_AMOUNT.mul(102).div(100)])
         .build()
     ).toThrow(
-      "Invariant failed: outputOverride must not be larger than original output"
+      "Invariant failed: cosigner output must not be larger than baseOutput"
     );
   });
 
