@@ -183,7 +183,7 @@ describe("OrderValidator", () => {
     );
   });
 
-  it.only("validates a filled order", async () => {
+  it("validates a filled order", async () => {
     const deadline = Math.floor(new Date().getTime() / 1000) + 1000;
     const amount = parseEther('1');
     const order = builder
