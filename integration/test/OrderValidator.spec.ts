@@ -61,12 +61,7 @@ describe("OrderValidator", () => {
       Permit2Abi.bytecode
     );
 
-    await hre.network.provider.send("hardhat_setCode", [
-      PERMIT2_MAPPING[chainId],
-      Permit2Abi.bytecode.object,
-    ]);
-
-    permit2 = permit2Factory.attach(PERMIT2_MAPPING[chainId]) as Permit2;
+    permit2 = (await permit2Factory.deploy()) as Permit2;
 
     const reactorFactory = await ethers.getContractFactory(
       ExclusiveDutchOrderReactorAbi.abi,
@@ -93,7 +88,7 @@ describe("OrderValidator", () => {
       to: await swapper.getAddress(),
       value: parseEther('1'),
     });
-    validator = new OrderValidator(ethers.provider, chainId, quoter.address);
+    validator = new OrderValidator(ethers.provider, chainId, quoter.address, permit2.address);
 
     const tokenFactory = await ethers.getContractFactory(
       MockERC20Abi.abi,
@@ -143,7 +138,8 @@ describe("OrderValidator", () => {
     const quoterLib = new OrderQuoterLib(
       ethers.provider,
       chainId,
-      quoter.address
+      quoter.address,
+      permit2.address
     );
     const { validation, quote } = await quoterLib.quote({ order, signature });
     expect(validation).to.equal(OrderValidation.OK);

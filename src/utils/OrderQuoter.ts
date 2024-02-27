@@ -29,6 +29,8 @@ import {
   multicallSameContractManyFunctions,
 } from "./multicall";
 
+import { getPermit2 } from ".";
+
 export enum OrderValidation {
   Expired,
   NonceUsed,
@@ -169,7 +171,8 @@ export class UniswapXOrderQuoter
   constructor(
     protected provider: BaseProvider,
     protected chainId: number,
-    orderQuoterAddress?: string
+    orderQuoterAddress?: string,
+    protected permit2Address?: string
   ) {
     if (orderQuoterAddress) {
       this.quoter = OrderQuoter__factory.connect(orderQuoterAddress, provider);
@@ -181,6 +184,8 @@ export class UniswapXOrderQuoter
     } else {
       throw new MissingConfiguration("quoter", chainId.toString());
     }
+
+    this.permit2Address = getPermit2(chainId, permit2Address);
   }
 
   async quote(order: SignedUniswapXOrder): Promise<UniswapXOrderQuote> {
@@ -257,11 +262,7 @@ export class UniswapXOrderQuoter
     });
 
     return await checkTerminalStates(
-      new NonceManager(
-        this.provider,
-        this.chainId,
-        PERMIT2_MAPPING[this.chainId]
-      ),
+      new NonceManager(this.provider, this.chainId, this.permit2Address),
       orders,
       validations
     );
@@ -283,7 +284,8 @@ export class RelayOrderQuoter
   constructor(
     protected provider: BaseProvider,
     protected chainId: number,
-    reactorAddress?: string
+    reactorAddress?: string,
+    protected permit2Address?: string
   ) {
     if (reactorAddress) {
       this.quoter = RelayOrderReactor__factory.connect(
@@ -298,6 +300,8 @@ export class RelayOrderQuoter
     } else {
       throw new MissingConfiguration("quoter", chainId.toString());
     }
+
+    this.permit2Address = getPermit2(chainId, permit2Address);
   }
 
   async quote(order: SignedRelayOrder): Promise<RelayOrderQuote> {
