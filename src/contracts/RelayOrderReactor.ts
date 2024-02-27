@@ -39,24 +39,31 @@ export type SignedOrderStructOutput = [string, string] & {
 
 export interface RelayOrderReactorInterface extends utils.Interface {
   functions: {
+    "PERMIT2()": FunctionFragment;
+    "execute((bytes,bytes))": FunctionFragment;
     "execute((bytes,bytes),address)": FunctionFragment;
     "multicall(bytes[])": FunctionFragment;
     "permit(address,address,address,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
-    "permit2()": FunctionFragment;
     "universalRouter()": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "execute"
+      | "PERMIT2"
+      | "execute((bytes,bytes))"
+      | "execute((bytes,bytes),address)"
       | "multicall"
       | "permit"
-      | "permit2"
       | "universalRouter"
   ): FunctionFragment;
 
+  encodeFunctionData(functionFragment: "PERMIT2", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "execute",
+    functionFragment: "execute((bytes,bytes))",
+    values: [SignedOrderStruct]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "execute((bytes,bytes),address)",
     values: [SignedOrderStruct, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -76,16 +83,22 @@ export interface RelayOrderReactorInterface extends utils.Interface {
       PromiseOrValue<BytesLike>
     ]
   ): string;
-  encodeFunctionData(functionFragment: "permit2", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "universalRouter",
     values?: undefined
   ): string;
 
-  decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "PERMIT2", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "execute((bytes,bytes))",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "execute((bytes,bytes),address)",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "multicall", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "permit", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "permit2", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "universalRouter",
     data: BytesLike
@@ -138,7 +151,14 @@ export interface RelayOrderReactor extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    execute(
+    PERMIT2(overrides?: CallOverrides): Promise<[string]>;
+
+    "execute((bytes,bytes))"(
+      signedOrder: SignedOrderStruct,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    "execute((bytes,bytes),address)"(
       signedOrder: SignedOrderStruct,
       feeRecipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -161,12 +181,17 @@ export interface RelayOrderReactor extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    permit2(overrides?: CallOverrides): Promise<[string]>;
-
     universalRouter(overrides?: CallOverrides): Promise<[string]>;
   };
 
-  execute(
+  PERMIT2(overrides?: CallOverrides): Promise<string>;
+
+  "execute((bytes,bytes))"(
+    signedOrder: SignedOrderStruct,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  "execute((bytes,bytes),address)"(
     signedOrder: SignedOrderStruct,
     feeRecipient: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -189,12 +214,17 @@ export interface RelayOrderReactor extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  permit2(overrides?: CallOverrides): Promise<string>;
-
   universalRouter(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
-    execute(
+    PERMIT2(overrides?: CallOverrides): Promise<string>;
+
+    "execute((bytes,bytes))"(
+      signedOrder: SignedOrderStruct,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    "execute((bytes,bytes),address)"(
       signedOrder: SignedOrderStruct,
       feeRecipient: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -217,8 +247,6 @@ export interface RelayOrderReactor extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    permit2(overrides?: CallOverrides): Promise<string>;
-
     universalRouter(overrides?: CallOverrides): Promise<string>;
   };
 
@@ -238,7 +266,14 @@ export interface RelayOrderReactor extends BaseContract {
   };
 
   estimateGas: {
-    execute(
+    PERMIT2(overrides?: CallOverrides): Promise<BigNumber>;
+
+    "execute((bytes,bytes))"(
+      signedOrder: SignedOrderStruct,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    "execute((bytes,bytes),address)"(
       signedOrder: SignedOrderStruct,
       feeRecipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -260,14 +295,19 @@ export interface RelayOrderReactor extends BaseContract {
       s: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
-
-    permit2(overrides?: CallOverrides): Promise<BigNumber>;
 
     universalRouter(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    execute(
+    PERMIT2(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    "execute((bytes,bytes))"(
+      signedOrder: SignedOrderStruct,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    "execute((bytes,bytes),address)"(
       signedOrder: SignedOrderStruct,
       feeRecipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -289,8 +329,6 @@ export interface RelayOrderReactor extends BaseContract {
       s: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
-
-    permit2(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     universalRouter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
