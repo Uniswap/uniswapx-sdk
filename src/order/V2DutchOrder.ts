@@ -25,22 +25,23 @@ export type CosignerData = {
   decayStartTime: number;
   decayEndTime: number;
   exclusiveFiller: string;
-  inputOverride: BigNumber;
-  outputOverrides: BigNumber[];
+  exclusivityOverrideBps: number;
+  inputAmount: BigNumber;
+  outputAmounts: BigNumber[];
 };
 
-export type CosignerDataJSON = {
-  decayStartTime: number;
-  decayEndTime: number;
-  exclusiveFiller: string;
-  inputOverride: string;
-  outputOverrides: string[];
+export type CosignerDataJSON = Omit<
+  CosignerData,
+  "inputAmount" | "outputAmounts"
+> & {
+  inputAmount: string;
+  outputAmounts: string[];
 };
 
 export type UnsignedV2DutchOrderInfo = OrderInfo & {
   cosigner: string;
-  input: DutchInput;
-  outputs: DutchOutput[];
+  baseInput: DutchInput;
+  baseOutputs: DutchOutput[];
 };
 
 export type CosignedV2DutchOrderInfo = UnsignedV2DutchOrderInfo & {
@@ -50,11 +51,11 @@ export type CosignedV2DutchOrderInfo = UnsignedV2DutchOrderInfo & {
 
 export type UnsignedV2DutchOrderInfoJSON = Omit<
   UnsignedV2DutchOrderInfo,
-  "nonce" | "input" | "outputs" | "cosignerData"
+  "nonce" | "baseInput" | "baseOutputs"
 > & {
   nonce: string;
-  input: DutchInputJSON;
-  outputs: DutchOutputJSON[];
+  baseInput: DutchInputJSON;
+  baseOutputs: DutchOutputJSON[];
 };
 
 export type CosignedV2DutchOrderInfoJSON = UnsignedV2DutchOrderInfoJSON & {
@@ -65,20 +66,20 @@ export type CosignedV2DutchOrderInfoJSON = UnsignedV2DutchOrderInfoJSON & {
 type V2WitnessInfo = {
   info: OrderInfo;
   cosigner: string;
-  inputToken: string;
-  inputStartAmount: BigNumber;
-  inputEndAmount: BigNumber;
-  outputs: DutchOutput[];
+  baseInputToken: string;
+  baseInputStartAmount: BigNumber;
+  baseInputEndAmount: BigNumber;
+  baseOutputs: DutchOutput[];
 };
 
 const V2_DUTCH_ORDER_TYPES = {
   V2DutchOrder: [
     { name: "info", type: "OrderInfo" },
     { name: "cosigner", type: "address" },
-    { name: "inputToken", type: "address" },
-    { name: "inputStartAmount", type: "uint256" },
-    { name: "inputEndAmount", type: "uint256" },
-    { name: "outputs", type: "DutchOutput[]" },
+    { name: "baseInputToken", type: "address" },
+    { name: "baseInputStartAmount", type: "uint256" },
+    { name: "baseInputEndAmount", type: "uint256" },
+    { name: "baseOutputs", type: "DutchOutput[]" },
   ],
   OrderInfo: [
     { name: "reactor", type: "address" },
@@ -103,7 +104,7 @@ const V2_DUTCH_ORDER_ABI = [
       "address", // cosigner
       "tuple(address,uint256,uint256)", // input
       "tuple(address,uint256,uint256,address)[]", // outputs
-      "tuple(uint256,uint256,address,uint256,uint256[])", // cosignerData
+      "tuple(uint256,uint256,address,uint256,uint256,uint256[])", // cosignerData
       "bytes", // cosignature
     ].join(",") +
     ")",
@@ -130,12 +131,12 @@ export class UnsignedV2DutchOrder extends Order {
       {
         ...json,
         nonce: BigNumber.from(json.nonce),
-        input: {
-          token: json.input.token,
-          startAmount: BigNumber.from(json.input.startAmount),
-          endAmount: BigNumber.from(json.input.endAmount),
+        baseInput: {
+          token: json.baseInput.token,
+          startAmount: BigNumber.from(json.baseInput.startAmount),
+          endAmount: BigNumber.from(json.baseInput.endAmount),
         },
-        outputs: json.outputs.map((output) => ({
+        baseOutputs: json.baseOutputs.map((output) => ({
           token: output.token,
           startAmount: BigNumber.from(output.startAmount),
           endAmount: BigNumber.from(output.endAmount),
@@ -175,12 +176,12 @@ export class UnsignedV2DutchOrder extends Order {
       deadline: this.info.deadline,
       additionalValidationContract: this.info.additionalValidationContract,
       additionalValidationData: this.info.additionalValidationData,
-      input: {
-        token: this.info.input.token,
-        startAmount: this.info.input.startAmount.toString(),
-        endAmount: this.info.input.endAmount.toString(),
+      baseInput: {
+        token: this.info.baseInput.token,
+        startAmount: this.info.baseInput.startAmount.toString(),
+        endAmount: this.info.baseInput.endAmount.toString(),
       },
-      outputs: this.info.outputs.map((output) => ({
+      baseOutputs: this.info.baseOutputs.map((output) => ({
         token: output.token,
         startAmount: output.startAmount.toString(),
         endAmount: output.endAmount.toString(),
@@ -207,18 +208,18 @@ export class UnsignedV2DutchOrder extends Order {
         ],
         this.info.cosigner,
         [
-          this.info.input.token,
-          this.info.input.startAmount,
-          this.info.input.endAmount,
+          this.info.baseInput.token,
+          this.info.baseInput.startAmount,
+          this.info.baseInput.endAmount,
         ],
-        this.info.outputs.map((output) => [
+        this.info.baseOutputs.map((output) => [
           output.token,
           output.startAmount,
           output.endAmount,
           output.recipient,
         ]),
         // use empty default for cosignerData and cosignature
-        [0, 0, ethers.constants.AddressZero, 0, [0]],
+        [0, 0, ethers.constants.AddressZero, 0, 0, [0]],
         "0x",
       ],
     ]);
@@ -273,8 +274,8 @@ export class UnsignedV2DutchOrder extends Order {
   private toPermit(): PermitTransferFrom {
     return {
       permitted: {
-        token: this.info.input.token,
-        amount: this.info.input.endAmount,
+        token: this.info.baseInput.token,
+        amount: this.info.baseInput.endAmount,
       },
       spender: this.info.reactor,
       nonce: this.info.nonce,
@@ -293,10 +294,10 @@ export class UnsignedV2DutchOrder extends Order {
         additionalValidationData: this.info.additionalValidationData,
       },
       cosigner: this.info.cosigner,
-      inputToken: this.info.input.token,
-      inputStartAmount: this.info.input.startAmount,
-      inputEndAmount: this.info.input.endAmount,
-      outputs: this.info.outputs,
+      baseInputToken: this.info.baseInput.token,
+      baseInputStartAmount: this.info.baseInput.startAmount,
+      baseInputEndAmount: this.info.baseInput.endAmount,
+      baseOutputs: this.info.baseOutputs,
     };
   }
 
@@ -319,13 +320,14 @@ export class UnsignedV2DutchOrder extends Order {
       [
         this.hash(),
         abiCoder.encode(
-          ["uint256", "uint256", "address", "uint256", "uint256[]"],
+          ["uint256", "uint256", "address", "uint256", "uint256", "uint256[]"],
           [
             cosignerData.decayStartTime,
             cosignerData.decayEndTime,
             cosignerData.exclusiveFiller,
-            cosignerData.inputOverride,
-            cosignerData.outputOverrides,
+            cosignerData.exclusivityOverrideBps,
+            cosignerData.inputAmount,
+            cosignerData.outputAmounts,
           ]
         ),
       ]
@@ -361,12 +363,12 @@ export class CosignedV2DutchOrder extends UnsignedV2DutchOrder {
       {
         ...json,
         nonce: BigNumber.from(json.nonce),
-        input: {
-          token: json.input.token,
-          startAmount: BigNumber.from(json.input.startAmount),
-          endAmount: BigNumber.from(json.input.endAmount),
+        baseInput: {
+          token: json.baseInput.token,
+          startAmount: BigNumber.from(json.baseInput.startAmount),
+          endAmount: BigNumber.from(json.baseInput.endAmount),
         },
-        outputs: json.outputs.map((output) => ({
+        baseOutputs: json.baseOutputs.map((output) => ({
           token: output.token,
           startAmount: BigNumber.from(output.startAmount),
           endAmount: BigNumber.from(output.endAmount),
@@ -376,10 +378,9 @@ export class CosignedV2DutchOrder extends UnsignedV2DutchOrder {
           decayStartTime: json.cosignerData.decayStartTime,
           decayEndTime: json.cosignerData.decayEndTime,
           exclusiveFiller: json.cosignerData.exclusiveFiller,
-          inputOverride: BigNumber.from(json.cosignerData.inputOverride),
-          outputOverrides: json.cosignerData.outputOverrides.map(
-            BigNumber.from
-          ),
+          exclusivityOverrideBps: json.cosignerData.exclusivityOverrideBps,
+          inputAmount: BigNumber.from(json.cosignerData.inputAmount),
+          outputAmounts: json.cosignerData.outputAmounts.map(BigNumber.from),
         },
         cosignature: json.cosignature,
       },
@@ -422,8 +423,9 @@ export class CosignedV2DutchOrder extends UnsignedV2DutchOrder {
         decayStartTime: this.info.cosignerData.decayStartTime,
         decayEndTime: this.info.cosignerData.decayEndTime,
         exclusiveFiller: this.info.cosignerData.exclusiveFiller,
-        inputOverride: this.info.cosignerData.inputOverride.toString(),
-        outputOverrides: this.info.cosignerData.outputOverrides.map((o) =>
+        exclusivityOverrideBps: this.info.cosignerData.exclusivityOverrideBps,
+        inputAmount: this.info.cosignerData.inputAmount.toString(),
+        outputAmounts: this.info.cosignerData.outputAmounts.map((o) =>
           o.toString()
         ),
       },
@@ -437,21 +439,21 @@ export class CosignedV2DutchOrder extends UnsignedV2DutchOrder {
   resolve(options: OrderResolutionOptions): ResolvedOrder {
     return {
       input: {
-        token: this.info.input.token,
+        token: this.info.baseInput.token,
         amount: getDecayedAmount(
           {
             decayStartTime: this.info.cosignerData.decayStartTime,
             decayEndTime: this.info.cosignerData.decayEndTime,
             startAmount: originalIfZero(
-              this.info.cosignerData.inputOverride,
-              this.info.input.startAmount
+              this.info.cosignerData.inputAmount,
+              this.info.baseInput.startAmount
             ),
-            endAmount: this.info.input.endAmount,
+            endAmount: this.info.baseInput.endAmount,
           },
           options.timestamp
         ),
       },
-      outputs: this.info.outputs.map((output, idx) => {
+      outputs: this.info.baseOutputs.map((output, idx) => {
         return {
           token: output.token,
           amount: getDecayedAmount(
@@ -459,7 +461,7 @@ export class CosignedV2DutchOrder extends UnsignedV2DutchOrder {
               decayStartTime: this.info.cosignerData!.decayStartTime,
               decayEndTime: this.info.cosignerData!.decayEndTime,
               startAmount: originalIfZero(
-                this.info.cosignerData!.outputOverrides[idx],
+                this.info.cosignerData!.outputAmounts[idx],
                 output.startAmount
               ),
               endAmount: output.endAmount,
@@ -488,11 +490,11 @@ export class CosignedV2DutchOrder extends UnsignedV2DutchOrder {
         ],
         this.info.cosigner,
         [
-          this.info.input.token,
-          this.info.input.startAmount,
-          this.info.input.endAmount,
+          this.info.baseInput.token,
+          this.info.baseInput.startAmount,
+          this.info.baseInput.endAmount,
         ],
-        this.info.outputs.map((output) => [
+        this.info.baseOutputs.map((output) => [
           output.token,
           output.startAmount,
           output.endAmount,
@@ -502,8 +504,9 @@ export class CosignedV2DutchOrder extends UnsignedV2DutchOrder {
           this.info.cosignerData.decayStartTime,
           this.info.cosignerData.decayEndTime,
           this.info.cosignerData.exclusiveFiller,
-          this.info.cosignerData.inputOverride.toString(),
-          this.info.cosignerData.outputOverrides.map((o) => o.toString()),
+          this.info.cosignerData.exclusivityOverrideBps,
+          this.info.cosignerData.inputAmount.toString(),
+          this.info.cosignerData.outputAmounts.map((o) => o.toString()),
         ],
         this.info.cosignature,
       ],
@@ -546,8 +549,9 @@ function parseSerializedOrder(serialized: string): CosignedV2DutchOrderInfo {
         decayStartTime,
         decayEndTime,
         exclusiveFiller,
-        inputOverride,
-        outputOverrides,
+        exclusivityOverrideBps,
+        inputAmount,
+        outputAmounts,
       ],
       cosignature,
     ],
@@ -560,12 +564,12 @@ function parseSerializedOrder(serialized: string): CosignedV2DutchOrderInfo {
     additionalValidationContract,
     additionalValidationData,
     cosigner,
-    input: {
+    baseInput: {
       token: inputToken,
       startAmount: inputStartAmount,
       endAmount: inputEndAmount,
     },
-    outputs: outputs.map(
+    baseOutputs: outputs.map(
       ([token, startAmount, endAmount, recipient]: [
         string,
         number,
@@ -585,8 +589,9 @@ function parseSerializedOrder(serialized: string): CosignedV2DutchOrderInfo {
       decayStartTime: decayStartTime.toNumber(),
       decayEndTime: decayEndTime.toNumber(),
       exclusiveFiller,
-      inputOverride,
-      outputOverrides,
+      exclusivityOverrideBps: exclusivityOverrideBps.toNumber(),
+      inputAmount,
+      outputAmounts,
     },
     cosignature,
   };
