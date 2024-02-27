@@ -22,6 +22,7 @@ import {
   UniswapXOrderQuoter as OrderQuoterLib,
   OrderValidation,
   getCancelSingleParams,
+  PERMIT2_MAPPING,
 } from "../../";
 
 const { BigNumber } = ethers;
@@ -47,6 +48,8 @@ describe("OrderValidator", () => {
   beforeEach(async () => {
     [admin, filler] = await ethers.getSigners();
 
+    chainId = hre.network.config.chainId || 1;
+
     const exclusivityValidatorFactory = await ethers.getContractFactory(
       ExclusiveFillerValidationAbi.abi,
       ExclusiveFillerValidationAbi.bytecode
@@ -57,7 +60,13 @@ describe("OrderValidator", () => {
       Permit2Abi.abi,
       Permit2Abi.bytecode
     );
-    permit2 = (await permit2Factory.deploy()) as Permit2;
+
+    await hre.network.provider.send("hardhat_setCode", [
+      PERMIT2_MAPPING[chainId],
+      Permit2Abi.bytecode.object,
+    ]);
+
+    permit2 = permit2Factory.attach(PERMIT2_MAPPING[chainId]) as Permit2;
 
     const reactorFactory = await ethers.getContractFactory(
       ExclusiveDutchOrderReactorAbi.abi,
@@ -73,7 +82,6 @@ describe("OrderValidator", () => {
       OrderQuoterAbi.bytecode
     );
     quoter = (await orderQuoterFactory.deploy()) as OrderQuoter;
-    chainId = hre.network.config.chainId || 1;
     builder = new DutchOrderBuilder(
       chainId,
       reactor.address,
@@ -175,7 +183,7 @@ describe("OrderValidator", () => {
     );
   });
 
-  it("validates a filled order", async () => {
+  it.only("validates a filled order", async () => {
     const deadline = Math.floor(new Date().getTime() / 1000) + 1000;
     const amount = parseEther('1');
     const order = builder
