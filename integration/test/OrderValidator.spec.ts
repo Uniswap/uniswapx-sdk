@@ -24,6 +24,7 @@ import {
   getCancelSingleParams,
   PERMIT2_MAPPING,
 } from "../../";
+import { deployAndReturnPermit2 } from "./utils/permit2";
 
 const { BigNumber } = ethers;
 const parseEther = ethers.utils.parseEther;
@@ -56,12 +57,7 @@ describe("OrderValidator", () => {
     );
     additionalValidationContract = (await exclusivityValidatorFactory.deploy()).address;
 
-    const permit2Factory = await ethers.getContractFactory(
-      Permit2Abi.abi,
-      Permit2Abi.bytecode
-    );
-
-    permit2 = (await permit2Factory.deploy()) as Permit2;
+    permit2 = await deployAndReturnPermit2(admin);
 
     const reactorFactory = await ethers.getContractFactory(
       ExclusiveDutchOrderReactorAbi.abi,
@@ -88,7 +84,7 @@ describe("OrderValidator", () => {
       to: await swapper.getAddress(),
       value: parseEther('1'),
     });
-    validator = new OrderValidator(ethers.provider, chainId, quoter.address, permit2.address);
+    validator = new OrderValidator(ethers.provider, chainId, quoter.address);
 
     const tokenFactory = await ethers.getContractFactory(
       MockERC20Abi.abi,
@@ -138,8 +134,7 @@ describe("OrderValidator", () => {
     const quoterLib = new OrderQuoterLib(
       ethers.provider,
       chainId,
-      quoter.address,
-      permit2.address
+      quoter.address
     );
     const { validation, quote } = await quoterLib.quote({ order, signature });
     expect(validation).to.equal(OrderValidation.OK);

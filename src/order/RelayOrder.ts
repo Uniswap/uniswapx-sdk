@@ -83,7 +83,7 @@ const RELAY_WITNESS_TYPES = {
     { name: "reactor", type: "address" },
     { name: "swapper", type: "address" },
     { name: "nonce", type: "uint256" },
-    { name: "deadline", type: "uint256" }
+    { name: "deadline", type: "uint256" },
   ],
   RelayOrder: [
     { name: "info", type: "OrderInfo" },
@@ -321,7 +321,7 @@ export class RelayOrder implements OffChainOrder {
         reactor: this.info.reactor,
         swapper: this.info.swapper,
         nonce: this.info.nonce,
-        deadline: this.info.deadline
+        deadline: this.info.deadline,
       },
       input: this.info.input,
       fee: this.info.fee,
