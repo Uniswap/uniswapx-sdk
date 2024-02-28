@@ -59,23 +59,36 @@ export type RelayOrderInfoJSON = Omit<
 };
 
 type WitnessInfo = {
-  reactor: string;
-  swapper: string;
-  inputRecipient: string;
-  feeStartAmount: BigNumber;
-  feeStartTime: number;
-  feeEndTime: number;
+  info: RelayOrderNestedOrderInfo;
+  input: RelayInput;
+  fee: RelayFee;
   universalRouterCalldata: string;
 };
 
+// TODO: update with new witness types
 const RELAY_WITNESS_TYPES = {
-  RelayOrder: [
+  FeeEscalator: [
+    { name: "token", type: "address" },
+    { name: "startAmount", type: "uint256" },
+    { name: "endAmount", type: "uint256" },
+    { name: "startTime", type: "uint256" },
+    { name: "endTime", type: "uint256" },
+  ],
+  Input: [
+    { name: "token", type: "address" },
+    { name: "amount", type: "uint256" },
+    { name: "recipient", type: "address" },
+  ],
+  OrderInfo: [
     { name: "reactor", type: "address" },
     { name: "swapper", type: "address" },
-    { name: "inputRecipient", type: "address" },
-    { name: "feeStartAmount", type: "uint256" },
-    { name: "feeStartTime", type: "uint256" },
-    { name: "feeEndTime", type: "uint256" },
+    { name: "nonce", type: "uint256" },
+    { name: "deadline", type: "uint256" }
+  ],
+  RelayOrder: [
+    { name: "info", type: "OrderInfo" },
+    { name: "input", type: "Input" },
+    { name: "fee", type: "FeeEscalator" },
     { name: "universalRouterCalldata", type: "bytes" },
   ],
 };
@@ -304,12 +317,14 @@ export class RelayOrder implements OffChainOrder {
 
   private witnessInfo(): WitnessInfo {
     return {
-      reactor: this.info.reactor,
-      swapper: this.info.swapper,
-      inputRecipient: this.info.input.recipient,
-      feeStartAmount: this.info.fee.startAmount,
-      feeStartTime: this.info.fee.startTime,
-      feeEndTime: this.info.fee.endTime,
+      info: {
+        reactor: this.info.reactor,
+        swapper: this.info.swapper,
+        nonce: this.info.nonce,
+        deadline: this.info.deadline
+      },
+      input: this.info.input,
+      fee: this.info.fee,
       universalRouterCalldata: this.info.universalRouterCalldata,
     };
   }
