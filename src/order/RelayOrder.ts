@@ -66,18 +66,6 @@ type WitnessInfo = {
 };
 
 const RELAY_WITNESS_TYPES = {
-  FeeEscalator: [
-    { name: "token", type: "address" },
-    { name: "startAmount", type: "uint256" },
-    { name: "endAmount", type: "uint256" },
-    { name: "startTime", type: "uint256" },
-    { name: "endTime", type: "uint256" },
-  ],
-  Input: [
-    { name: "token", type: "address" },
-    { name: "amount", type: "uint256" },
-    { name: "recipient", type: "address" },
-  ],
   RelayOrder: [
     { name: "info", type: "RelayOrderInfo" },
     { name: "input", type: "Input" },
@@ -89,6 +77,18 @@ const RELAY_WITNESS_TYPES = {
     { name: "swapper", type: "address" },
     { name: "nonce", type: "uint256" },
     { name: "deadline", type: "uint256" },
+  ],
+  Input: [
+    { name: "token", type: "address" },
+    { name: "amount", type: "uint256" },
+    { name: "recipient", type: "address" },
+  ],
+  FeeEscalator: [
+    { name: "token", type: "address" },
+    { name: "startAmount", type: "uint256" },
+    { name: "endAmount", type: "uint256" },
+    { name: "startTime", type: "uint256" },
+    { name: "endTime", type: "uint256" },
   ],
 };
 
