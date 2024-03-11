@@ -65,7 +65,6 @@ type WitnessInfo = {
   universalRouterCalldata: string;
 };
 
-// TODO: update with new witness types
 const RELAY_WITNESS_TYPES = {
   FeeEscalator: [
     { name: "token", type: "address" },
@@ -79,17 +78,17 @@ const RELAY_WITNESS_TYPES = {
     { name: "amount", type: "uint256" },
     { name: "recipient", type: "address" },
   ],
-  OrderInfo: [
+  RelayOrder: [
+    { name: "info", type: "RelayOrderInfo" },
+    { name: "input", type: "Input" },
+    { name: "fee", type: "FeeEscalator" },
+    { name: "universalRouterCalldata", type: "bytes" },
+  ],
+  RelayOrderInfo: [
     { name: "reactor", type: "address" },
     { name: "swapper", type: "address" },
     { name: "nonce", type: "uint256" },
     { name: "deadline", type: "uint256" },
-  ],
-  RelayOrder: [
-    { name: "info", type: "OrderInfo" },
-    { name: "input", type: "Input" },
-    { name: "fee", type: "FeeEscalator" },
-    { name: "universalRouterCalldata", type: "bytes" },
   ],
 };
 
