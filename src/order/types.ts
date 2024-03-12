@@ -5,10 +5,6 @@ import {
 } from "@uniswap/permit2-sdk";
 import { BigNumber } from "ethers";
 
-import { ResolvedUniswapXOrder } from "../utils/OrderQuoter";
-
-import { CustomOrderValidation, parseValidation } from "./validation";
-
 // General interface implemented by off chain orders
 export interface OffChainOrder {
   /**
@@ -32,35 +28,6 @@ export interface OffChainOrder {
    * @return The order hash which is used as a key on-chain
    */
   hash(): string;
-}
-
-// Base class for a UniswapX order
-export abstract class UniswapXOrder implements OffChainOrder {
-  abstract info: OrderInfo;
-
-  abstract chainId: number;
-
-  abstract serialize(): string;
-
-  abstract getSigner(signature: SignatureLike): string;
-
-  abstract permitData(): PermitTransferFromData;
-
-  abstract hash(): string;
-
-  /**
-   * Returns the parsed validation
-   * @return The parsed validation data for the order
-   */
-  get validation(): CustomOrderValidation {
-    return parseValidation(this.info);
-  }
-
-  /**
-   * Returns the resolved order with the given options
-   * @return The resolved order
-   */
-  abstract resolve(options: OrderResolutionOptions): ResolvedUniswapXOrder;
 }
 
 export type TokenAmount = {

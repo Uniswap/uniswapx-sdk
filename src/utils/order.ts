@@ -1,6 +1,12 @@
 import { OrderType, REVERSE_REACTOR_MAPPING } from "../constants";
 import { MissingConfiguration } from "../errors";
-import { DutchOrder, Order, RelayOrder, UnsignedV2DutchOrder } from "../order";
+import {
+  DutchOrder,
+  Order,
+  RelayOrder,
+  UniswapXOrder,
+  UnsignedV2DutchOrder,
+} from "../order";
 
 import { stripHexPrefix } from ".";
 
@@ -56,7 +62,7 @@ export class UniswapXOrderParser extends OrderParser {
   /**
    * Parses a serialized order
    */
-  parseOrder(order: string, chainId: number): Order {
+  parseOrder(order: string, chainId: number): UniswapXOrder {
     const orderType = this._parseOrder(order);
     switch (orderType) {
       case OrderType.Dutch:
@@ -96,7 +102,7 @@ export class RelayOrderParser extends OrderParser {
   /**
    * Parses a serialized order
    */
-  parseOrder(order: string, chainId: number): Order {
+  parseOrder(order: string, chainId: number): RelayOrder {
     return RelayOrder.parse(order, chainId);
   }
 }
