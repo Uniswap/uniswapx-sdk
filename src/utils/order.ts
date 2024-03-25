@@ -1,12 +1,12 @@
 import { OrderType, REVERSE_REACTOR_MAPPING } from "../constants";
 import { MissingConfiguration } from "../errors";
 import {
+  CosignedV2DutchOrder,
   DutchOrder,
   Order,
   RelayOrder,
   UniswapXOrder,
   UnsignedV2DutchOrder,
-  CosignedV2DutchOrder
 } from "../order";
 
 import { stripHexPrefix } from ".";
