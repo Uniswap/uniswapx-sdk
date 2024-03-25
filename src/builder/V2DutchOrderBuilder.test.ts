@@ -8,7 +8,7 @@ import { V2DutchOrderBuilder } from "./V2DutchOrderBuilder";
 const INPUT_TOKEN = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 const OUTPUT_TOKEN = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 
-const INTPUT_START_AMOUNT = BigNumber.from("1000000");
+const INPUT_START_AMOUNT = BigNumber.from("1000000");
 const OUTPUT_START_AMOUNT = BigNumber.from("1000000000000000000");
 
 describe("V2DutchOrderBuilder", () => {
@@ -30,8 +30,8 @@ describe("V2DutchOrderBuilder", () => {
       .nonce(BigNumber.from(100))
       .input({
         token: INPUT_TOKEN,
-        startAmount: INTPUT_START_AMOUNT,
-        endAmount: INTPUT_START_AMOUNT,
+        startAmount: INPUT_START_AMOUNT,
+        endAmount: INPUT_START_AMOUNT,
       })
       .output({
         token: OUTPUT_TOKEN,
@@ -39,8 +39,8 @@ describe("V2DutchOrderBuilder", () => {
         endAmount: OUTPUT_START_AMOUNT.mul(90).div(100),
         recipient: constants.AddressZero,
       })
-      .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-      .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+      .inputOverride(INPUT_START_AMOUNT.mul(99).div(100))
+      .outputOverrides([OUTPUT_START_AMOUNT])
       .build();
 
     expect(order.info.cosignerData.decayStartTime).toEqual(deadline - 100);
@@ -69,8 +69,8 @@ describe("V2DutchOrderBuilder", () => {
       .nonce(BigNumber.from(100))
       .input({
         token: INPUT_TOKEN,
-        startAmount: INTPUT_START_AMOUNT,
-        endAmount: INTPUT_START_AMOUNT,
+        startAmount: INPUT_START_AMOUNT,
+        endAmount: INPUT_START_AMOUNT,
       })
       .output({
         token: OUTPUT_TOKEN,
@@ -78,8 +78,8 @@ describe("V2DutchOrderBuilder", () => {
         endAmount: OUTPUT_START_AMOUNT.mul(90).div(100),
         recipient: constants.AddressZero,
       })
-      .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-      .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+      .inputOverride(INPUT_START_AMOUNT)
+      .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
       .validation(validationInfo)
       .build();
 
@@ -116,8 +116,8 @@ describe("V2DutchOrderBuilder", () => {
       .nonce(BigNumber.from(100))
       .input({
         token: INPUT_TOKEN,
-        startAmount: INTPUT_START_AMOUNT,
-        endAmount: INTPUT_START_AMOUNT,
+        startAmount: INPUT_START_AMOUNT,
+        endAmount: INPUT_START_AMOUNT,
       })
       .output({
         token: OUTPUT_TOKEN,
@@ -125,8 +125,8 @@ describe("V2DutchOrderBuilder", () => {
         endAmount: OUTPUT_START_AMOUNT.mul(90).div(100),
         recipient: constants.AddressZero,
       })
-      .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-      .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+      .inputOverride(INPUT_START_AMOUNT.mul(98).div(100))
+      .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
       .validation(validationInfo)
       .build();
 
@@ -159,8 +159,8 @@ describe("V2DutchOrderBuilder", () => {
       .nonce(BigNumber.from(100))
       .input({
         token: INPUT_TOKEN,
-        startAmount: INTPUT_START_AMOUNT,
-        endAmount: INTPUT_START_AMOUNT,
+        startAmount: INPUT_START_AMOUNT,
+        endAmount: INPUT_START_AMOUNT,
       })
       .output({
         token: OUTPUT_TOKEN,
@@ -168,8 +168,8 @@ describe("V2DutchOrderBuilder", () => {
         endAmount: OUTPUT_START_AMOUNT.mul(90).div(100),
         recipient: constants.AddressZero,
       })
-      .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-      .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+      .inputOverride(INPUT_START_AMOUNT.mul(98).div(100))
+      .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
       .validation(validationInfo)
       .build();
 
@@ -193,8 +193,8 @@ describe("V2DutchOrderBuilder", () => {
       .nonce(BigNumber.from(100))
       .input({
         token: INPUT_TOKEN,
-        startAmount: INTPUT_START_AMOUNT,
-        endAmount: INTPUT_START_AMOUNT,
+        startAmount: INPUT_START_AMOUNT,
+        endAmount: INPUT_START_AMOUNT,
       })
       .output({
         token: OUTPUT_TOKEN,
@@ -208,8 +208,8 @@ describe("V2DutchOrderBuilder", () => {
         endAmount: OUTPUT_START_AMOUNT.mul(9).div(100),
         recipient: constants.AddressZero,
       })
-      .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-      .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+      .inputOverride(INPUT_START_AMOUNT.mul(98).div(100))
+      .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
       .build();
 
     expect(order.info.cosignerData.decayStartTime).toEqual(deadline - 100);
@@ -228,8 +228,8 @@ describe("V2DutchOrderBuilder", () => {
         .nonce(BigNumber.from(100))
         .input({
           token: INPUT_TOKEN,
-          startAmount: INTPUT_START_AMOUNT,
-          endAmount: INTPUT_START_AMOUNT,
+          startAmount: INPUT_START_AMOUNT,
+          endAmount: INPUT_START_AMOUNT,
         })
         .output({
           token: OUTPUT_TOKEN,
@@ -237,8 +237,8 @@ describe("V2DutchOrderBuilder", () => {
           endAmount: OUTPUT_START_AMOUNT,
           recipient: constants.AddressZero,
         })
-        .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-        .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+        .inputOverride(INPUT_START_AMOUNT.mul(98).div(100))
+        .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
         .build()
     ).toThrow("Invariant failed: cosigner not set");
   });
@@ -255,8 +255,8 @@ describe("V2DutchOrderBuilder", () => {
         .nonce(BigNumber.from(100))
         .input({
           token: INPUT_TOKEN,
-          startAmount: INTPUT_START_AMOUNT,
-          endAmount: INTPUT_START_AMOUNT,
+          startAmount: INPUT_START_AMOUNT,
+          endAmount: INPUT_START_AMOUNT,
         })
         .output({
           token: OUTPUT_TOKEN,
@@ -264,8 +264,8 @@ describe("V2DutchOrderBuilder", () => {
           endAmount: OUTPUT_START_AMOUNT,
           recipient: constants.AddressZero,
         })
-        .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-        .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+        .inputOverride(INPUT_START_AMOUNT.mul(98).div(100))
+        .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
         .build()
     ).toThrow("Invariant failed: swapper not set");
   });
@@ -281,8 +281,8 @@ describe("V2DutchOrderBuilder", () => {
         .swapper(constants.AddressZero)
         .input({
           token: INPUT_TOKEN,
-          startAmount: INTPUT_START_AMOUNT,
-          endAmount: INTPUT_START_AMOUNT,
+          startAmount: INPUT_START_AMOUNT,
+          endAmount: INPUT_START_AMOUNT,
         })
         .output({
           token: OUTPUT_TOKEN,
@@ -290,8 +290,8 @@ describe("V2DutchOrderBuilder", () => {
           endAmount: OUTPUT_START_AMOUNT,
           recipient: constants.AddressZero,
         })
-        .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-        .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+        .inputOverride(INPUT_START_AMOUNT.mul(98).div(100))
+        .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
         .build()
     ).toThrow("Invariant failed: deadline not set");
   });
@@ -308,8 +308,8 @@ describe("V2DutchOrderBuilder", () => {
         .swapper(constants.AddressZero)
         .input({
           token: INPUT_TOKEN,
-          startAmount: INTPUT_START_AMOUNT,
-          endAmount: INTPUT_START_AMOUNT,
+          startAmount: INPUT_START_AMOUNT,
+          endAmount: INPUT_START_AMOUNT,
         })
         .output({
           token: OUTPUT_TOKEN,
@@ -317,13 +317,13 @@ describe("V2DutchOrderBuilder", () => {
           endAmount: OUTPUT_START_AMOUNT,
           recipient: constants.AddressZero,
         })
-        .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-        .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+        .inputOverride(INPUT_START_AMOUNT.mul(98).div(100))
+        .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
         .build()
     ).toThrow("Invariant failed: nonce not set");
   });
 
-  it("inputOverride smaller than input", () => {
+  it("inputOverride larger than input", () => {
     const deadline = Math.floor(Date.now() / 1000) + 1000;
     expect(() =>
       builder
@@ -336,8 +336,8 @@ describe("V2DutchOrderBuilder", () => {
         .swapper(constants.AddressZero)
         .input({
           token: INPUT_TOKEN,
-          startAmount: INTPUT_START_AMOUNT,
-          endAmount: INTPUT_START_AMOUNT,
+          startAmount: INPUT_START_AMOUNT,
+          endAmount: INPUT_START_AMOUNT,
         })
         .output({
           token: OUTPUT_TOKEN,
@@ -345,41 +345,41 @@ describe("V2DutchOrderBuilder", () => {
           endAmount: OUTPUT_START_AMOUNT,
           recipient: constants.AddressZero,
         })
-        .inputOverride(INTPUT_START_AMOUNT.mul(99).div(100))
-        .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
-        .build()
-    ).toThrow(
-      "Invariant failed: inputOverride not set or smaller than original input"
-    );
-  });
-
-  it("outputOverride larger than output", () => {
-    const deadline = Math.floor(Date.now() / 1000) + 1000;
-    expect(() =>
-      builder
-        .cosigner(constants.AddressZero)
-        .cosignature("0x")
-        .nonce(BigNumber.from(1))
-        .deadline(deadline)
-        .decayEndTime(deadline)
-        .decayStartTime(deadline - 100)
-        .swapper(constants.AddressZero)
-        .input({
-          token: INPUT_TOKEN,
-          startAmount: INTPUT_START_AMOUNT,
-          endAmount: INTPUT_START_AMOUNT,
-        })
-        .output({
-          token: OUTPUT_TOKEN,
-          startAmount: OUTPUT_START_AMOUNT,
-          endAmount: OUTPUT_START_AMOUNT,
-          recipient: constants.AddressZero,
-        })
-        .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
+        .inputOverride(INPUT_START_AMOUNT.mul(102).div(100))
         .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
         .build()
     ).toThrow(
-      "Invariant failed: outputOverride must not be larger than original output"
+      "Invariant failed: inputOverride not set or larger than original input"
+    );
+  });
+
+  it("outputOverride smaller than output", () => {
+    const deadline = Math.floor(Date.now() / 1000) + 1000;
+    expect(() =>
+      builder
+        .cosigner(constants.AddressZero)
+        .cosignature("0x")
+        .nonce(BigNumber.from(1))
+        .deadline(deadline)
+        .decayEndTime(deadline)
+        .decayStartTime(deadline - 100)
+        .swapper(constants.AddressZero)
+        .input({
+          token: INPUT_TOKEN,
+          startAmount: INPUT_START_AMOUNT,
+          endAmount: INPUT_START_AMOUNT,
+        })
+        .output({
+          token: OUTPUT_TOKEN,
+          startAmount: OUTPUT_START_AMOUNT,
+          endAmount: OUTPUT_START_AMOUNT,
+          recipient: constants.AddressZero,
+        })
+        .inputOverride(INPUT_START_AMOUNT.mul(98).div(100))
+        .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+        .build()
+    ).toThrow(
+      "Invariant failed: outputOverride must be larger than or equal to original output"
     );
   });
 
@@ -394,8 +394,8 @@ describe("V2DutchOrderBuilder", () => {
       .nonce(BigNumber.from(100))
       .input({
         token: INPUT_TOKEN,
-        startAmount: INTPUT_START_AMOUNT,
-        endAmount: INTPUT_START_AMOUNT,
+        startAmount: INPUT_START_AMOUNT,
+        endAmount: INPUT_START_AMOUNT,
       })
       .output({
         token: OUTPUT_TOKEN,
@@ -403,8 +403,8 @@ describe("V2DutchOrderBuilder", () => {
         endAmount: OUTPUT_START_AMOUNT.mul(90).div(100),
         recipient: constants.AddressZero,
       })
-      .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-      .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+      .inputOverride(INPUT_START_AMOUNT.mul(98).div(100))
+      .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
       .build();
 
     expect(order.info.cosignerData.decayEndTime).toEqual(deadline);
@@ -422,8 +422,8 @@ describe("V2DutchOrderBuilder", () => {
       .nonce(BigNumber.from(100))
       .input({
         token: INPUT_TOKEN,
-        startAmount: INTPUT_START_AMOUNT,
-        endAmount: INTPUT_START_AMOUNT,
+        startAmount: INPUT_START_AMOUNT,
+        endAmount: INPUT_START_AMOUNT,
       })
       .output({
         token: OUTPUT_TOKEN,
@@ -431,8 +431,8 @@ describe("V2DutchOrderBuilder", () => {
         endAmount: OUTPUT_START_AMOUNT.mul(90).div(100),
         recipient: constants.AddressZero,
       })
-      .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-      .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+      .inputOverride(INPUT_START_AMOUNT.mul(98).div(100))
+      .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
       .build();
 
     expect(order.info.deadline).toEqual(decayEndTime);
@@ -452,8 +452,8 @@ describe("V2DutchOrderBuilder", () => {
         .nonce(BigNumber.from(100))
         .input({
           token: INPUT_TOKEN,
-          startAmount: INTPUT_START_AMOUNT,
-          endAmount: INTPUT_START_AMOUNT,
+          startAmount: INPUT_START_AMOUNT,
+          endAmount: INPUT_START_AMOUNT,
         })
         .output({
           token: OUTPUT_TOKEN,
@@ -461,8 +461,8 @@ describe("V2DutchOrderBuilder", () => {
           endAmount: OUTPUT_START_AMOUNT.add(100),
           recipient: constants.AddressZero,
         })
-        .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-        .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+        .inputOverride(INPUT_START_AMOUNT.mul(98).div(100))
+        .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
         .build()
     ).toThrow("startAmount must be greater than endAmount: 100");
   });
@@ -480,8 +480,8 @@ describe("V2DutchOrderBuilder", () => {
         .nonce(BigNumber.from(100))
         .input({
           token: INPUT_TOKEN,
-          startAmount: INTPUT_START_AMOUNT,
-          endAmount: INTPUT_START_AMOUNT,
+          startAmount: INPUT_START_AMOUNT,
+          endAmount: INPUT_START_AMOUNT,
         })
         .output({
           token: OUTPUT_TOKEN,
@@ -489,8 +489,8 @@ describe("V2DutchOrderBuilder", () => {
           endAmount: OUTPUT_START_AMOUNT,
           recipient: constants.AddressZero,
         })
-        .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-        .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+        .inputOverride(INPUT_START_AMOUNT.mul(89).div(100))
+        .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
         .build()
     ).toThrow("Invariant failed: Deadline must be in the future: 1234");
   });
@@ -508,8 +508,8 @@ describe("V2DutchOrderBuilder", () => {
         .nonce(BigNumber.from(100))
         .input({
           token: INPUT_TOKEN,
-          startAmount: INTPUT_START_AMOUNT,
-          endAmount: INTPUT_START_AMOUNT,
+          startAmount: INPUT_START_AMOUNT,
+          endAmount: INPUT_START_AMOUNT,
         })
         .output({
           token: OUTPUT_TOKEN,
@@ -517,8 +517,8 @@ describe("V2DutchOrderBuilder", () => {
           endAmount: OUTPUT_START_AMOUNT,
           recipient: constants.AddressZero,
         })
-        .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-        .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+        .inputOverride(INPUT_START_AMOUNT.mul(98).div(100))
+        .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
         .build()
     ).toThrow(
       `Invariant failed: decayStartTime must be before or same as deadline: ${
@@ -540,8 +540,8 @@ describe("V2DutchOrderBuilder", () => {
         .nonce(BigNumber.from(100))
         .input({
           token: INPUT_TOKEN,
-          startAmount: INTPUT_START_AMOUNT,
-          endAmount: INTPUT_START_AMOUNT,
+          startAmount: INPUT_START_AMOUNT,
+          endAmount: INPUT_START_AMOUNT,
         })
         .output({
           token: OUTPUT_TOKEN,
@@ -549,8 +549,8 @@ describe("V2DutchOrderBuilder", () => {
           endAmount: OUTPUT_START_AMOUNT,
           recipient: constants.AddressZero,
         })
-        .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
-        .outputOverrides([OUTPUT_START_AMOUNT.mul(98).div(100)])
+        .inputOverride(INPUT_START_AMOUNT.mul(98).div(100))
+        .outputOverrides([OUTPUT_START_AMOUNT.mul(102).div(100)])
         .build()
     ).toThrow(
       `Invariant failed: decayEndTime must be before or same as deadline: ${
@@ -583,8 +583,8 @@ describe("V2DutchOrderBuilder", () => {
         .deadline(deadline)
         .input({
           token: INPUT_TOKEN,
-          startAmount: INTPUT_START_AMOUNT,
-          endAmount: INTPUT_START_AMOUNT,
+          startAmount: INPUT_START_AMOUNT,
+          endAmount: INPUT_START_AMOUNT,
         })
         .output({
           token: OUTPUT_TOKEN,
@@ -607,8 +607,8 @@ describe("V2DutchOrderBuilder", () => {
         .decayStartTime(1)
         .input({
           token: INPUT_TOKEN,
-          startAmount: INTPUT_START_AMOUNT,
-          endAmount: INTPUT_START_AMOUNT,
+          startAmount: INPUT_START_AMOUNT,
+          endAmount: INPUT_START_AMOUNT,
         })
         .output({
           token: OUTPUT_TOKEN,
@@ -616,7 +616,7 @@ describe("V2DutchOrderBuilder", () => {
           endAmount: OUTPUT_START_AMOUNT.mul(90).div(100),
           recipient: constants.AddressZero,
         })
-        .inputOverride(INTPUT_START_AMOUNT.mul(102).div(100))
+        .inputOverride(INPUT_START_AMOUNT.mul(98).div(100))
         .buildPartial();
 
       expect(order.info.outputs.length).toEqual(1);
