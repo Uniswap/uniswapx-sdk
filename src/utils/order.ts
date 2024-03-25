@@ -14,7 +14,7 @@ const UNISWAPX_FIRST_FIELD_OFFSET = 664;
 const RELAY_FIRST_FIELD_OFFSET = 88;
 const ADDRESS_LENGTH = 40;
 
-abstract class OrderParser {
+export abstract class OrderParser {
   abstract offset: number;
 
   abstract parseOrder(order: string, chainId: number): Order;
