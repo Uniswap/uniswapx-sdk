@@ -7,6 +7,7 @@ import { BigNumber } from "ethers";
 
 // General interface implemented by off chain orders
 export interface OffChainOrder {
+  chainId: number;
   /**
    * Returns the abi encoded order
    * @return The abi encoded serialized order which can be submitted on-chain
