@@ -63,6 +63,8 @@ export interface RelayOrderQuote {
   quote: ResolvedRelayOrder | undefined;
 }
 
+export type OrderQuote = UniswapXOrderQuote | RelayOrderQuote;
+
 const BASIC_ERROR = "0x08c379a0";
 
 const KNOWN_ERRORS: { [key: string]: OrderValidation } = {
@@ -114,7 +116,7 @@ export interface SignedOrder {
   signature: string;
 }
 
-interface OrderQuoter<TOrder, TQuote> {
+export interface OrderQuoter<TOrder, TQuote> {
   quote(order: TOrder): Promise<TQuote>;
   quoteBatch(orders: TOrder[]): Promise<TQuote[]>;
   orderQuoterAddress: string;
