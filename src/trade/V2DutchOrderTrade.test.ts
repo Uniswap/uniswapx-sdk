@@ -79,7 +79,7 @@ describe("V2DutchOrderTrade", () => {
   });
 
   it("works for native output trades", () => {
-    const ethOutputOrderInfo = {
+    const ethOutputOrderInfo: UnsignedV2DutchOrderInfo = {
       ...orderInfo,
       baseOutputs: [
         {
@@ -102,7 +102,7 @@ describe("V2DutchOrderTrade", () => {
   });
 
   it("works for native output trades where order info has 0 address", () => {
-    const ethOutputOrderInfo = {
+    const ethOutputOrderInfo: UnsignedV2DutchOrderInfo = {
       ...orderInfo,
       baseOutputs: [
         {
